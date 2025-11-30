@@ -11,9 +11,6 @@ import lightning from '@assets/stock_images/cute_minimalist_flat_eac62b69.jpg';
 import cloud from '@assets/stock_images/cute_minimalist_flat_83a5735d.jpg';
 import heart from '@assets/stock_images/cute_minimalist_flat_506f5106.jpg';
 
-// Fallback images or logic to handle stock image loading failure could be added, 
-// but for now we assume assets exist or we use icons as backup in UI if image fails (CSS)
-
 const CARD_IMAGES = [
   { id: 'sun', src: happySun, fallbackIcon: Sun },
   { id: 'moon', src: calmMoon, fallbackIcon: Moon },
@@ -120,7 +117,17 @@ export function MemoryMatch({ onComplete }: { onComplete: (score: number) => voi
       {!isPlaying && matches === 0 && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-30 p-4 text-center">
           <h2 className="text-4xl md:text-5xl font-heading font-black text-black mb-4 uppercase tracking-tighter">Mind Match</h2>
-          <p className="text-slate-600 mb-8 text-center max-w-md font-medium">Find the matching images. Sharpen your mind. Earn FEELS.</p>
+          
+           <div className="max-w-md text-left space-y-4 mb-8 border-2 border-black p-6 rounded-xl bg-slate-50 mx-auto">
+            <h3 className="font-bold text-xl border-b-2 border-black pb-2 mb-2">How to Play:</h3>
+            <ul className="list-disc list-inside font-medium space-y-2">
+              <li>Tap cards to flip them</li>
+              <li>Find matching pairs of images</li>
+              <li>Clear the board in fewest moves</li>
+              <li>Earn points for speed and accuracy</li>
+            </ul>
+          </div>
+
           <Button onClick={initializeGame} size="lg" className="btn-flat bg-primary text-white font-bold rounded-none text-xl px-10 py-8 w-full md:w-auto">
             Start Focusing
           </Button>

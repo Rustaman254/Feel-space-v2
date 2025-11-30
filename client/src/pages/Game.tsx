@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BubblePop } from '@/components/games/BubblePop';
 import { MemoryMatch } from '@/components/games/MemoryMatch';
+import { Breathing } from '@/components/games/Breathing';
 import { motion } from 'framer-motion';
 
 export default function Game() {
@@ -13,6 +14,33 @@ export default function Game() {
   const handleComplete = (score: number) => {
     // Could submit score to contract here
     console.log('Game completed with score:', score);
+  };
+
+  const getGameComponent = () => {
+    switch(gameType) {
+      case 'bubble': return <BubblePop onComplete={handleComplete} />;
+      case 'memory': return <MemoryMatch onComplete={handleComplete} />;
+      case 'breathing': return <Breathing onComplete={handleComplete} />;
+      default: return <div>Game not found</div>;
+    }
+  };
+
+  const getGameTitle = () => {
+    switch(gameType) {
+      case 'bubble': return 'Bubble Pop';
+      case 'memory': return 'Mind Match';
+      case 'breathing': return 'Box Breathing';
+      default: return 'Game';
+    }
+  };
+
+  const getGameSubtitle = () => {
+    switch(gameType) {
+      case 'bubble': return 'Stress Relief Session';
+      case 'memory': return 'Focus Enhancement Session';
+      case 'breathing': return 'Calm Regulation Session';
+      default: return '';
+    }
   };
 
   return (
@@ -25,10 +53,10 @@ export default function Game() {
         </Link>
         <div>
           <h1 className="text-4xl font-heading font-black text-black uppercase tracking-tight">
-            {gameType === 'bubble' ? 'Bubble Pop' : 'Mind Match'}
+            {getGameTitle()}
           </h1>
           <p className="text-slate-500 font-bold text-lg">
-            {gameType === 'bubble' ? 'Stress Relief Session' : 'Focus Enhancement Session'}
+            {getGameSubtitle()}
           </p>
         </div>
       </div>
@@ -39,11 +67,7 @@ export default function Game() {
         transition={{ duration: 0.5 }}
         className="p-1"
       >
-        {gameType === 'bubble' ? (
-          <BubblePop onComplete={handleComplete} />
-        ) : (
-          <MemoryMatch onComplete={handleComplete} />
-        )}
+        {getGameComponent()}
       </motion.div>
     </div>
   );

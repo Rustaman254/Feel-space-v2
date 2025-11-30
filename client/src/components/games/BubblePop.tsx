@@ -96,9 +96,19 @@ export function BubblePop({ onComplete }: { onComplete: (score: number) => void 
 
       {/* Start Screen */}
       {!isPlaying && timeLeft === 30 && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-30">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-30 p-4">
           <h2 className="text-5xl font-heading font-black text-black mb-4 uppercase tracking-tighter">Bubble Pop</h2>
-          <p className="text-slate-600 mb-8 text-center max-w-md font-medium">Pop bubbles. Relieve stress. Simple.</p>
+          
+          <div className="max-w-md text-left space-y-4 mb-8 border-2 border-black p-6 rounded-xl bg-slate-50">
+            <h3 className="font-bold text-xl border-b-2 border-black pb-2 mb-2">How to Play:</h3>
+            <ul className="list-disc list-inside font-medium space-y-2">
+              <li>Tap bubbles to pop them</li>
+              <li>Each pop earns 10 points</li>
+              <li>Clear as many as you can in 30s</li>
+              <li>Release your stress with every pop!</li>
+            </ul>
+          </div>
+
           <Button onClick={startGame} size="lg" className="btn-flat bg-accent text-black font-bold rounded-none text-xl px-10 py-8">
             Start Popping
           </Button>
