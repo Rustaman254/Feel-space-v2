@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { Smile, Frown, CloudRain, Zap, ArrowRight, Lock } from 'lucide-react';
+import { Smile, Frown, CloudRain, Zap, ArrowRight, Lock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useWallet } from '@/hooks/useWallet';
+import { useWeb3 } from '@/hooks/use-web3';
 
 const EMOTIONS = [
   {
     id: 'happy',
     label: 'Happy',
     icon: Smile,
-    color: 'bg-yellow-100 text-yellow-600',
-    description: 'Feeling energetic and positive',
+    color: 'bg-accent text-black',
+    description: 'Feeling energetic & positive',
     game: 'memory', 
     gameTitle: 'Mind Match'
   },
@@ -20,7 +20,7 @@ const EMOTIONS = [
     id: 'anxious',
     label: 'Anxious',
     icon: Zap,
-    color: 'bg-purple-100 text-purple-600',
+    color: 'bg-primary text-white',
     description: 'Feeling jittery or worried',
     game: 'bubble',
     gameTitle: 'Bubble Pop'
@@ -29,7 +29,7 @@ const EMOTIONS = [
     id: 'sad',
     label: 'Sad',
     icon: CloudRain,
-    color: 'bg-blue-100 text-blue-600',
+    color: 'bg-secondary text-white',
     description: 'Feeling down or blue',
     game: 'bubble',
     gameTitle: 'Bubble Pop'
@@ -38,7 +38,7 @@ const EMOTIONS = [
     id: 'angry',
     label: 'Frustrated',
     icon: Frown,
-    color: 'bg-red-100 text-red-600',
+    color: 'bg-destructive text-white',
     description: 'Feeling tense or angry',
     game: 'bubble',
     gameTitle: 'Bubble Pop'
@@ -49,52 +49,63 @@ export default function Home() {
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isConnected, connect } = useWallet();
+  const { isConnected, connect } = useWeb3();
 
   const handleContinue = () => {
     if (!selectedEmotion) return;
     
     if (!isConnected) {
       toast({
-        title: "Connect Wallet",
-        description: "Please connect your Celo wallet to track your emotion on-chain.",
+        title: "Wallet Required",
+        description: "Connect your Celo wallet to continue.",
         variant: "destructive"
       });
+      connect();
       return;
     }
 
     const emotion = EMOTIONS.find(e => e.id === selectedEmotion);
     if (emotion) {
-      // In a real app, we would call the smart contract here
+      // Transaction logic would go here
       toast({
-        title: "Emotion Logged",
-        description: `Recorded "${emotion.label}" on the blockchain. +10 Tokens Reward!`,
+        title: "Emotion Logged!",
+        description: `Recorded "${emotion.label}" on Celo Alfajores.`,
       });
       
       setTimeout(() => {
         setLocation(`/game/${emotion.game}`);
-      }, 1000);
+      }, 800);
     }
   };
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-12 max-w-5xl mx-auto">
       {/* Hero Section */}
-      <section className="text-center space-y-6 mt-8 relative">
+      <section className="text-center space-y-6 mt-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="inline-block bg-accent border-2 border-black px-4 py-1 rounded-full font-bold text-sm mb-4 shadow-flat-sm"
+        >
+          LIVE ON CELO ALFAJORES
+        </motion.div>
+
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-5xl md:text-7xl font-heading font-bold text-slate-900 tracking-tight"
+          className="text-6xl md:text-8xl font-heading font-black text-black tracking-tighter leading-[0.9]"
         >
-          How are you feeling?
+          HOW ARE YOU <br/>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary stroke-black" style={{ WebkitTextStroke: '2px black' }}>FEELING?</span>
         </motion.h1>
+        
         <motion.p 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-xl text-slate-600 max-w-2xl mx-auto"
+          className="text-2xl font-bold text-slate-500 max-w-2xl mx-auto"
         >
-          Track your emotional wellbeing on Celo and discover games to help you find balance.
+          Track your vibe. Earn tokens. Find balance.
         </motion.p>
       </section>
 
@@ -112,24 +123,24 @@ export default function Home() {
               transition={{ delay: 0.2 + idx * 0.1 }}
               onClick={() => setSelectedEmotion(emotion.id)}
               className={`
-                relative p-6 rounded-3xl cursor-pointer transition-all duration-300 border-2 group
+                relative p-6 rounded-xl cursor-pointer transition-all duration-200 border-2 border-black
                 ${isSelected 
-                  ? 'bg-white border-primary shadow-xl scale-105 ring-4 ring-primary/10' 
-                  : 'bg-white/40 border-white/60 hover:bg-white/60 hover:border-white hover:shadow-lg hover:-translate-y-1'
+                  ? 'bg-white shadow-flat scale-105 -translate-y-2 ring-2 ring-black' 
+                  : 'bg-white shadow-flat-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
                 }
               `}
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${emotion.color}`}>
-                <Icon className="w-7 h-7" />
+              <div className={`w-16 h-16 rounded-lg border-2 border-black flex items-center justify-center mb-4 ${emotion.color} shadow-flat-sm`}>
+                <Icon className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-2">{emotion.label}</h3>
-              <p className="text-sm text-slate-500 mb-4">{emotion.description}</p>
+              <h3 className="text-2xl font-black text-black mb-2 uppercase tracking-tight">{emotion.label}</h3>
+              <p className="text-sm font-bold text-slate-500 mb-4 leading-tight">{emotion.description}</p>
               
               <div className={`
-                text-xs font-medium px-3 py-1 rounded-full inline-flex items-center gap-1
-                ${isSelected ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'}
+                text-xs font-black uppercase px-3 py-2 rounded-md border border-black inline-flex items-center gap-1
+                ${isSelected ? 'bg-black text-white' : 'bg-slate-100 text-black'}
               `}>
-                Recommended: {emotion.gameTitle}
+                Play: {emotion.gameTitle}
               </div>
             </motion.div>
           );
@@ -145,23 +156,28 @@ export default function Home() {
         <Button 
           size="lg" 
           className={`
-            rounded-full px-10 py-8 text-xl shadow-2xl transition-all duration-500
-            ${selectedEmotion ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4 cursor-not-allowed'}
+            btn-flat bg-black text-white text-xl px-12 py-8 rounded-lg font-black uppercase tracking-wide
+            ${selectedEmotion ? 'opacity-100' : 'opacity-50 cursor-not-allowed'}
           `}
           disabled={!selectedEmotion}
           onClick={selectedEmotion ? handleContinue : undefined}
         >
           {isConnected ? (
             <>
-              Check In & Play <ArrowRight className="ml-2 w-6 h-6" />
+              Log Mood & Play <ArrowRight className="ml-2 w-6 h-6" />
             </>
           ) : (
             <>
-              <Lock className="ml-2 w-5 h-5 mr-2" /> Connect Wallet to Continue
+              <Lock className="ml-2 w-5 h-5 mr-2" /> Connect to Log Mood
             </>
           )}
         </Button>
       </motion.div>
+      
+      <div className="text-center pb-10 text-sm text-slate-400 font-bold">
+        <Info className="w-4 h-4 inline mr-1" />
+        Requires Celo Alfajores (Testnet) funds to interact
+      </div>
     </div>
   );
 }

@@ -1,47 +1,57 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Wallet, Menu, Sparkles } from 'lucide-react';
+import { Wallet, Sparkles, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useWallet } from '@/hooks/useWallet';
 import { Toaster } from '@/components/ui/toaster';
+import { useWeb3 } from '@/hooks/use-web3';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { isConnected, address, connect, disconnect } = useWallet();
+  const { address, isConnected, balance, connect, disconnect } = useWeb3();
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-foreground overflow-hidden relative">
-      {/* Background Elements */}
-      <div className="fixed inset-0 z-[-1]">
-        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-purple-400/20 rounded-full blur-[120px] animate-float" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] bg-teal-400/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '-3s' }} />
-      </div>
-
       {/* Navigation */}
-      <nav className="w-full px-6 py-4 flex justify-between items-center z-10 glass sticky top-0">
+      <nav className="w-full px-6 py-6 flex justify-between items-center z-10 bg-white border-b-2 border-black">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer group">
-            <div className="p-2 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
-              <Sparkles className="w-6 h-6 text-primary" />
+            <div className="p-2 bg-accent border-2 border-black rounded-md shadow-flat-sm group-hover:translate-y-1 group-hover:shadow-none transition-all">
+              <Sparkles className="w-6 h-6 text-black" />
             </div>
-            <span className="font-heading font-bold text-xl tracking-tight text-slate-800">CeloMood</span>
+            <span className="font-heading font-black text-2xl tracking-tight text-black">CeloMood</span>
           </div>
         </Link>
 
         <div className="flex items-center gap-4">
           {isConnected ? (
-            <div className="flex items-center gap-2 bg-white/50 px-4 py-2 rounded-full border border-white/40 shadow-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-slate-700 font-mono">{address}</span>
-              <Button variant="ghost" size="sm" onClick={disconnect} className="h-auto p-1 ml-2 text-xs text-slate-500 hover:text-destructive">
-                Disconnect
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex flex-col items-end mr-2">
+                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Balance</span>
+                 <span className="font-mono font-bold">{balance} CELO</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border-2 border-black shadow-flat-sm">
+                <div className="w-3 h-3 bg-green-500 rounded-full border border-black" />
+                <span className="text-sm font-bold text-black font-mono">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={disconnect} 
+                className="border-2 border-black shadow-flat-sm hover:shadow-none hover:translate-y-[2px] transition-all bg-destructive/10 hover:bg-destructive/20"
+              >
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
           ) : (
-            <Button onClick={connect} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-full px-6">
+            <Button 
+              onClick={connect} 
+              className="bg-primary text-white font-bold border-2 border-black shadow-flat hover:shadow-flat-sm hover:translate-y-[2px] transition-all rounded-lg px-6"
+            >
               <Wallet className="w-4 h-4 mr-2" />
               Connect Wallet
             </Button>
@@ -50,7 +60,7 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8 z-10 max-w-5xl">
+      <main className="flex-1 container mx-auto px-4 py-12 z-10 max-w-5xl">
         {children}
       </main>
 

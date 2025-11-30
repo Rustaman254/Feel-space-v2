@@ -4,41 +4,47 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
   
-  /* Ethereal Palette */
-  --color-background: hsl(210 20% 98%);
-  --color-foreground: hsl(222 47% 11%);
+  /* Fun & Flat Palette */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(0 0% 10%);
 
-  --color-card: hsl(0 0% 100% / 0.7);
-  --color-card-foreground: hsl(222 47% 11%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(0 0% 10%);
 
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(222 47% 11%);
+  --color-popover-foreground: hsl(0 0% 10%);
 
-  --color-primary: hsl(186 60% 45%);
-  --color-primary-foreground: hsl(210 40% 98%);
+  /* Bright & Bold */
+  --color-primary: hsl(260 100% 65%); /* Bold Purple */
+  --color-primary-foreground: hsl(0 0% 100%);
 
-  --color-secondary: hsl(262 60% 65%);
-  --color-secondary-foreground: hsl(210 40% 98%);
+  --color-secondary: hsl(180 100% 40%); /* Teal */
+  --color-secondary-foreground: hsl(0 0% 100%);
 
-  --color-muted: hsl(210 40% 96.1%);
-  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+  --color-muted: hsl(0 0% 96%);
+  --color-muted-foreground: hsl(0 0% 40%);
 
-  --color-accent: hsl(210 40% 96.1%);
-  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+  --color-accent: hsl(50 100% 50%); /* Bright Yellow */
+  --color-accent-foreground: hsl(0 0% 10%);
 
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(210 40% 98%);
+  --color-destructive: hsl(0 80% 50%);
+  --color-destructive-foreground: hsl(0 0% 100%);
 
-  --color-border: hsl(214.3 31.8% 91.4%);
-  --color-input: hsl(214.3 31.8% 91.4%);
-  --color-ring: hsl(186 60% 45%);
+  --color-border: hsl(0 0% 10%); /* Strong black borders */
+  --color-input: hsl(0 0% 10%);
+  --color-ring: hsl(260 100% 65%);
 
   --font-sans: 'Inter', sans-serif;
   --font-heading: 'Outfit', sans-serif;
+  
+  /* Custom shadows for flat design */
+  --shadow-flat: 4px 4px 0px 0px hsl(0 0% 10%);
+  --shadow-flat-sm: 2px 2px 0px 0px hsl(0 0% 10%);
+  --shadow-flat-lg: 8px 8px 0px 0px hsl(0 0% 10%);
 }
 
 @layer base {
@@ -47,35 +53,21 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-    background-attachment: fixed;
-  }
-  
-  /* Glassmorphism utilities */
-  .glass {
-    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-lg;
-  }
-  
-  .glass-card {
-    @apply bg-white/40 backdrop-blur-md border border-white/30 shadow-sm hover:bg-white/50 transition-all duration-300;
+    /* Dot pattern background */
+    background-image: radial-gradient(circle, #e5e5e5 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
-  }
-}
-
-@layer utilities {
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
+    @apply font-heading font-black;
   }
   
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-    100% { transform: translateY(0px); }
+  /* Neo-Brutalist / Flat Styles */
+  .btn-flat {
+    @apply border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all;
+  }
+  
+  .card-flat {
+    @apply bg-white border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)];
   }
 }
