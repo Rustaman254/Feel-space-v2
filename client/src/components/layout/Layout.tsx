@@ -16,7 +16,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col font-sans text-foreground overflow-hidden relative bg-background">
       {/* Navigation */}
-      <nav className="w-full px-4 md:px-6 py-4 md:py-6 flex flex-col md:flex-row justify-between items-center z-10 bg-white border-b-2 border-black gap-4">
+      <nav className="w-full px-4 md:px-6 py-4 md:py-6 flex flex-col md:flex-row justify-between items-center z-10 bg-white border-black gap-4">
         <div className="flex items-center justify-between w-full md:w-auto">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer group">

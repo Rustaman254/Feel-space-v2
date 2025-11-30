@@ -4,12 +4,12 @@ import { RefreshCw, Trophy, Star, Heart, Cloud, Sun, Moon, Music, Zap, Anchor } 
 import { Button } from '@/components/ui/button';
 
 // Use stock images for memory matching instead of just icons
-import happySun from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_happy_sun.jpg';
-import calmMoon from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_calm_moon.jpg';
-import musicNote from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_music_note.jpg';
-import lightning from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_lightning_bolt.jpg';
-import cloud from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_cloud.jpg';
-import heart from '@assets/stock_images/cute_minimalist_flat_illustration_of_a_heart.jpg';
+import happySun from '@assets/stock_images/cute_minimalist_flat_1bb94a89.jpg';
+import calmMoon from '@assets/stock_images/cute_minimalist_flat_f86f71f5.jpg';
+import musicNote from '@assets/stock_images/cute_minimalist_flat_20b12d4e.jpg';
+import lightning from '@assets/stock_images/cute_minimalist_flat_eac62b69.jpg';
+import cloud from '@assets/stock_images/cute_minimalist_flat_83a5735d.jpg';
+import heart from '@assets/stock_images/cute_minimalist_flat_506f5106.jpg';
 
 // Fallback images or logic to handle stock image loading failure could be added, 
 // but for now we assume assets exist or we use icons as backup in UI if image fails (CSS)
