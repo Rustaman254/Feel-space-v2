@@ -65,7 +65,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           ) : (
             <Button 
-              onClick={connect} 
+              onClick={() => connect()} 
               className="bg-primary text-white font-bold border-2 border-black shadow-flat hover:shadow-flat-sm hover:translate-y-[2px] transition-all rounded-lg px-4 py-2"
             >
               <Wallet className="w-4 h-4 mr-2" />
@@ -101,7 +101,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         ) : (
           <Button 
-              onClick={connect} 
+              onClick={() => connect()} 
               size="sm"
               className="bg-primary text-white font-bold border-2 border-black shadow-flat-sm text-xs px-3"
             >

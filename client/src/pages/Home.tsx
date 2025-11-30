@@ -5,6 +5,7 @@ import { Smile, Frown, CloudRain, Zap, ArrowRight, Lock, Info, Flame, Sun, Batte
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/use-web3';
+import { WalletModal } from '@/components/WalletModal';
 import { differenceInMinutes } from 'date-fns';
 
 const EMOTIONS = [
@@ -86,7 +87,7 @@ export default function Home() {
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isConnected, connect, logEmotion, history } = useWeb3();
+  const { isConnected, connect, logEmotion, history, showWalletModal, setShowWalletModal, installedWallets } = useWeb3();
 
   // Calculate Streaks & Next Log Time
   const lastLog = history.length > 0 ? history[0].timestamp : 0;
@@ -97,40 +98,48 @@ export default function Home() {
   // If wallet not connected, show connection gate
   if (!isConnected) {
     return (
-      <div className="flex flex-col gap-8 max-w-5xl mx-auto items-center justify-center min-h-[70vh]">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-6"
-        >
-          <h1 className="text-5xl md:text-7xl font-heading font-black text-black tracking-tighter leading-[0.9]">
-            FEEL SPACE
-          </h1>
-          <p className="text-xl font-bold text-slate-500 max-w-2xl mx-auto">
-            Track your emotions. Play therapeutic games. Earn rewards.
-          </p>
-
-          <div className="bg-white border-2 border-black rounded-xl p-8 shadow-flat max-w-md mx-auto space-y-6">
-            <div className="space-y-3 text-left">
-              <h2 className="text-2xl font-heading font-black text-black">Getting Started</h2>
-              <p className="text-slate-600 font-medium">Connect your wallet to begin your emotional wellness journey.</p>
-            </div>
-
-            <Button 
-              onClick={connect}
-              size="lg"
-              className="w-full bg-primary text-white font-bold border-2 border-black shadow-flat hover:shadow-flat-sm hover:translate-y-[2px] transition-all rounded-lg px-6 py-8 text-lg"
-            >
-              <Wallet className="w-5 h-5 mr-3" />
-              Connect Wallet
-            </Button>
-
-            <p className="text-xs text-slate-400 text-center font-bold">
-              Supports MetaMask, MiniPay & all EVM wallets on Celo Alfajores
+      <>
+        <div className="flex flex-col gap-8 max-w-5xl mx-auto items-center justify-center min-h-[70vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center space-y-6"
+          >
+            <h1 className="text-5xl md:text-7xl font-heading font-black text-black tracking-tighter leading-[0.9]">
+              FEEL SPACE
+            </h1>
+            <p className="text-xl font-bold text-slate-500 max-w-2xl mx-auto">
+              Track your emotions. Play therapeutic games. Earn rewards.
             </p>
-          </div>
-        </motion.div>
-      </div>
+
+            <div className="bg-white border-2 border-black rounded-xl p-8 shadow-flat max-w-md mx-auto space-y-6">
+              <div className="space-y-3 text-left">
+                <h2 className="text-2xl font-heading font-black text-black">Getting Started</h2>
+                <p className="text-slate-600 font-medium">Connect your wallet to begin your emotional wellness journey.</p>
+              </div>
+
+              <Button 
+                onClick={() => setShowWalletModal(true)}
+                size="lg"
+                className="w-full bg-primary text-white font-bold border-2 border-black shadow-flat hover:shadow-flat-sm hover:translate-y-[2px] transition-all rounded-lg px-6 py-8 text-lg"
+              >
+                <Wallet className="w-5 h-5 mr-3" />
+                Connect Wallet
+              </Button>
+
+              <p className="text-xs text-slate-400 text-center font-bold">
+                Supports MetaMask, MiniPay & all EVM wallets on Celo Alfajores
+              </p>
+            </div>
+          </motion.div>
+        </div>
+        <WalletModal 
+          isOpen={showWalletModal}
+          onClose={() => setShowWalletModal(false)}
+          installedWallets={installedWallets}
+          onSelectWallet={connect}
+        />
+      </>
     );
   }
 
