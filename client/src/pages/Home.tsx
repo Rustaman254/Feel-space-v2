@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { Smile, Frown, CloudRain, Zap, ArrowRight, Lock, Info, Flame, Sun, BatteryCharging, Heart, Coffee } from 'lucide-react';
+import { Smile, Frown, CloudRain, Zap, ArrowRight, Lock, Info, Flame, Sun, BatteryCharging, Heart, Coffee, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/use-web3';
@@ -92,24 +92,54 @@ export default function Home() {
   const lastLog = history.length > 0 ? history[0].timestamp : 0;
   const minsSinceLastLog = differenceInMinutes(Date.now(), lastLog);
   const canLog = minsSinceLastLog >= 60 || history.length === 0;
-  const streak = history.length > 0 ? Math.min(history.length, 5) : 0; // Mock streak logic
+  const streak = history.length > 0 ? Math.min(history.length, 5) : 0;
+
+  // If wallet not connected, show connection gate
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col gap-8 max-w-5xl mx-auto items-center justify-center min-h-[70vh]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-6"
+        >
+          <h1 className="text-5xl md:text-7xl font-heading font-black text-black tracking-tighter leading-[0.9]">
+            FEEL SPACE
+          </h1>
+          <p className="text-xl font-bold text-slate-500 max-w-2xl mx-auto">
+            Track your emotions. Play therapeutic games. Earn rewards.
+          </p>
+
+          <div className="bg-white border-2 border-black rounded-xl p-8 shadow-flat max-w-md mx-auto space-y-6">
+            <div className="space-y-3 text-left">
+              <h2 className="text-2xl font-heading font-black text-black">Getting Started</h2>
+              <p className="text-slate-600 font-medium">Connect your wallet to begin your emotional wellness journey.</p>
+            </div>
+
+            <Button 
+              onClick={connect}
+              size="lg"
+              className="w-full bg-primary text-white font-bold border-2 border-black shadow-flat hover:shadow-flat-sm hover:translate-y-[2px] transition-all rounded-lg px-6 py-8 text-lg"
+            >
+              <Wallet className="w-5 h-5 mr-3" />
+              Connect Wallet
+            </Button>
+
+            <p className="text-xs text-slate-400 text-center font-bold">
+              Supports MetaMask, MiniPay & all EVM wallets on Celo Alfajores
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   const handleContinue = () => {
     if (!selectedEmotion) return;
-    
-    if (!isConnected) {
-      toast({
-        title: "Wallet Required",
-        description: "Connect any EVM wallet to continue.",
-        variant: "destructive"
-      });
-      connect();
-      return;
-    }
 
     const emotion = EMOTIONS.find(e => e.id === selectedEmotion);
     if (emotion) {
-      logEmotion(emotion.id, 5, "Quick check-in"); // Log to "chain" (mocked in hook)
+      logEmotion(emotion.id, 5, "Quick check-in");
       
       toast({
         title: "Emotion Logged! +10 FEELS",
@@ -127,7 +157,7 @@ export default function Home() {
     <div className="flex flex-col gap-8 max-w-5xl mx-auto">
       
       {/* Streak / Status Banner */}
-      {isConnected && (
+      {(
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white border-2 border-black p-4 rounded-xl shadow-flat-sm">
            <div className="flex items-center gap-3">
              <div className="bg-orange-100 p-2 rounded-lg border border-orange-400">

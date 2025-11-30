@@ -16,7 +16,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col font-sans text-foreground overflow-hidden relative bg-background pb-24 md:pb-0">
       {/* Desktop Navigation */}
-      <nav className="w-full px-4 md:px-6 py-4 md:py-6 hidden md:flex justify-between items-center z-10 bg-white border-b-2 border-black gap-4">
+      <nav className="w-full px-4 md:px-6 py-4 md:py-6 hidden md:flex justify-between items-center z-10 bg-white gap-4">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer group">
             <div className="p-2 bg-accent border-2 border-black rounded-md shadow-flat-sm group-hover:translate-y-1 group-hover:shadow-none transition-all">
@@ -76,7 +76,7 @@ export function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* Mobile Header (Logo + Wallet) */}
-      <nav className="md:hidden w-full px-4 py-4 flex justify-between items-center bg-white border-b-2 border-black sticky top-0 z-20">
+      <nav className="md:hidden w-full px-4 py-4 flex justify-between items-center bg-white sticky top-0 z-20">
         <Link href="/">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary fill-current" />
