@@ -7,12 +7,21 @@ declare global {
   }
 }
 
+export interface EmotionEntry {
+  timestamp: number;
+  emotion: string;
+  intensity: number;
+  notes: string;
+  earned: number;
+}
+
 export function useWeb3() {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState<string>('0');
-  const [balances, setBalances] = useState<{ [key: string]: number }>({}); // Mock balances for demo
-  const [ownedGames, setOwnedGames] = useState<string[]>([]); // Mock owned games
+  const [balances, setBalances] = useState<{ [key: string]: number }>({}); 
+  const [ownedGames, setOwnedGames] = useState<string[]>([]);
+  const [history, setHistory] = useState<EmotionEntry[]>([]);
   const [chainId, setChainId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -34,9 +43,15 @@ export function useWeb3() {
         const balanceEth = (parseInt(balanceHex, 16) / 1e18).toFixed(4);
         setBalance(balanceEth);
 
-        // Initialize mock game data for demo purposes
-        setBalances({ 'FEELS': 120 });
+        // Initialize USER-SPECIFIC data (Mocked for demo)
+        // In a real app, this would be fetched from the smart contract
+        setBalances({ 'FEELS': 0 }); 
         setOwnedGames(['bubble', 'memory', 'breathing']);
+        setHistory([
+           // Mock history for the connected user
+           { timestamp: Date.now() - 86400000, emotion: 'anxious', intensity: 6, notes: 'Deadline approaching.', earned: 10 },
+           { timestamp: Date.now() - 172800000, emotion: 'sad', intensity: 4, notes: 'Rainy day blues.', earned: 10 },
+        ]);
 
         if (chainId !== '0xaef3') { 
              try {
@@ -91,17 +106,29 @@ export function useWeb3() {
     setAddress(null);
     setIsConnected(false);
     setBalance('0');
-    setBalances({});
-    setOwnedGames([]);
+    setBalances({}); // Clear balances
+    setOwnedGames([]); // Clear games
+    setHistory([]); // Clear history
   }, []);
 
-  // Mock function to simulate buying a game
   const buyGame = useCallback((gameId: string) => {
-    // This would interact with the smart contract in a real app
     console.log(`Buying game: ${gameId}`);
-    // Simulate success
     setOwnedGames(prev => [...prev, gameId]);
+    setBalances(prev => ({ ...prev, 'FEELS': prev['FEELS'] - 50 })); // Deduct cost
     return true;
+  }, []);
+
+  const logEmotion = useCallback((emotion: string, intensity: number, notes: string) => {
+    const reward = 10;
+    const newEntry = {
+      timestamp: Date.now(),
+      emotion,
+      intensity,
+      notes,
+      earned: reward
+    };
+    setHistory(prev => [newEntry, ...prev]);
+    setBalances(prev => ({ ...prev, 'FEELS': (prev['FEELS'] || 0) + reward }));
   }, []);
 
   useEffect(() => {
@@ -122,5 +149,5 @@ export function useWeb3() {
     }
   }, [disconnect]);
 
-  return { address, isConnected, balance, balances, ownedGames, chainId, connect, disconnect, buyGame };
+  return { address, isConnected, balance, balances, ownedGames, history, chainId, connect, disconnect, buyGame, logEmotion };
 }

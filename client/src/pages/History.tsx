@@ -1,40 +1,73 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Smile, Frown, CloudRain, Zap, Calendar, Clock } from 'lucide-react';
+import { Smile, Frown, CloudRain, Zap, Calendar, Clock, Flame, Sun, BatteryCharging, Heart, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
-
-// Mock Data (This would come from the smart contract: getHistory())
-const MOCK_HISTORY = [
-  { timestamp: Date.now(), emotion: 'happy', intensity: 8, notes: 'Had a great coffee!', earned: 10 },
-  { timestamp: Date.now() - 86400000, emotion: 'anxious', intensity: 6, notes: 'Deadline approaching.', earned: 10 },
-  { timestamp: Date.now() - 172800000, emotion: 'sad', intensity: 4, notes: 'Rainy day blues.', earned: 10 },
-  { timestamp: Date.now() - 259200000, emotion: 'happy', intensity: 9, notes: 'Met a friend.', earned: 10 },
-  { timestamp: Date.now() - 345600000, emotion: 'angry', intensity: 7, notes: 'Stuck in traffic.', earned: 10 },
-];
+import { useWeb3 } from '@/hooks/use-web3';
+import { Button } from '@/components/ui/button';
+import { Link } from 'wouter';
 
 const EMOTION_CONFIG: any = {
   happy: { icon: Smile, color: 'bg-accent text-black', label: 'Happy' },
+  excited: { icon: Flame, color: 'bg-orange-400 text-black', label: 'Excited' },
+  grateful: { icon: Heart, color: 'bg-pink-400 text-white', label: 'Grateful' },
+  calm: { icon: Sun, color: 'bg-yellow-200 text-yellow-800', label: 'Calm' },
+  tired: { icon: BatteryCharging, color: 'bg-slate-300 text-slate-600', label: 'Tired' },
   anxious: { icon: Zap, color: 'bg-primary text-white', label: 'Anxious' },
   sad: { icon: CloudRain, color: 'bg-secondary text-white', label: 'Sad' },
   angry: { icon: Frown, color: 'bg-destructive text-white', label: 'Frustrated' },
 };
 
 export default function HistoryPage() {
+  const { history, isConnected } = useWeb3();
+
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
+        <div className="bg-slate-100 p-8 rounded-full border-4 border-slate-200">
+          <AlertCircle className="w-16 h-16 text-slate-400" />
+        </div>
+        <div>
+          <h2 className="text-3xl font-black font-heading uppercase">Wallet Not Connected</h2>
+          <p className="text-slate-500 font-bold mt-2">Connect your wallet to view your mood history.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
+        <div className="bg-slate-100 p-8 rounded-full border-4 border-slate-200">
+          <Calendar className="w-16 h-16 text-slate-400" />
+        </div>
+        <div>
+          <h2 className="text-3xl font-black font-heading uppercase">No History Yet</h2>
+          <p className="text-slate-500 font-bold mt-2">Start logging your emotions to see your timeline.</p>
+        </div>
+        <Link href="/">
+          <Button className="btn-flat bg-black text-white font-bold px-8 py-6">
+            Log First Mood
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       <div className="border-b-2 border-black pb-6">
         <h1 className="text-5xl font-heading font-black text-black uppercase tracking-tighter">Mood History</h1>
         <p className="text-xl font-bold text-slate-500 mt-2">Your emotional journey on-chain.</p>
       </div>
 
       <div className="relative border-l-4 border-black ml-4 md:ml-8 pl-8 md:pl-12 py-4 space-y-12">
-        {MOCK_HISTORY.map((entry, idx) => {
-          const config = EMOTION_CONFIG[entry.emotion];
+        {history.map((entry, idx) => {
+          const config = EMOTION_CONFIG[entry.emotion] || EMOTION_CONFIG['happy'];
           const Icon = config.icon;
 
           return (
             <motion.div
-              key={idx}
+              key={entry.timestamp}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
