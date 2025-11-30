@@ -11,23 +11,22 @@ export function useWeb3() {
   const [address, setAddress] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [balance, setBalance] = useState<string>('0');
+  const [balances, setBalances] = useState<{ [key: string]: number }>({}); // Mock balances for demo
+  const [ownedGames, setOwnedGames] = useState<string[]>([]); // Mock owned games
   const [chainId, setChainId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const connect = useCallback(async () => {
     if (typeof window.ethereum !== 'undefined') {
       try {
-        // Request account access
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const account = accounts[0];
         setAddress(account);
         setIsConnected(true);
         
-        // Get Chain ID
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         setChainId(chainId);
 
-        // Get Balance
         const balanceHex = await window.ethereum.request({ 
           method: 'eth_getBalance', 
           params: [account, 'latest'] 
@@ -35,15 +34,17 @@ export function useWeb3() {
         const balanceEth = (parseInt(balanceHex, 16) / 1e18).toFixed(4);
         setBalance(balanceEth);
 
-        // Switch to Celo Alfajores if not connected
-        if (chainId !== '0xaef3') { // 44787 in hex
+        // Initialize mock game data for demo purposes
+        setBalances({ 'FEELS': 120 });
+        setOwnedGames(['bubble', 'memory', 'breathing']);
+
+        if (chainId !== '0xaef3') { 
              try {
                await window.ethereum.request({
                  method: 'wallet_switchEthereumChain',
                  params: [{ chainId: '0xaef3' }],
                });
              } catch (switchError: any) {
-               // This error code indicates that the chain has not been added to MetaMask.
                if (switchError.code === 4902) {
                  try {
                    await window.ethereum.request({
@@ -90,9 +91,19 @@ export function useWeb3() {
     setAddress(null);
     setIsConnected(false);
     setBalance('0');
+    setBalances({});
+    setOwnedGames([]);
   }, []);
 
-  // Listen for account changes
+  // Mock function to simulate buying a game
+  const buyGame = useCallback((gameId: string) => {
+    // This would interact with the smart contract in a real app
+    console.log(`Buying game: ${gameId}`);
+    // Simulate success
+    setOwnedGames(prev => [...prev, gameId]);
+    return true;
+  }, []);
+
   useEffect(() => {
     if (typeof window.ethereum !== 'undefined') {
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
@@ -111,5 +122,5 @@ export function useWeb3() {
     }
   }, [disconnect]);
 
-  return { address, isConnected, balance, chainId, connect, disconnect };
+  return { address, isConnected, balance, balances, ownedGames, chainId, connect, disconnect, buyGame };
 }
