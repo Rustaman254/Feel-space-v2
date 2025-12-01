@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { web3Service } from '@/lib/web3';
 
@@ -32,8 +38,6 @@ export interface GameSessionEntry {
   score: number;
   timestamp: number;
   txHash?: string;
-  // Optional: add reward if you want to show it in UI
-  // reward?: number;
 }
 
 export interface WalletOption {
@@ -59,12 +63,16 @@ function useWeb3State() {
   const [installedWallets, setInstalledWallets] = useState<WalletOption[]>([]);
   const { toast } = useToast();
 
+  // CELO SEPOLIA CHAIN ID (double-check this is correct for your deployment)
+  const CELO_SEPOLIA_CHAIN_ID = '0xaa044c';
+
   // Detect if running inside MiniPay in-app browser
   const isMiniPayInApp = useCallback(() => {
     const userAgent = navigator.userAgent.toLowerCase();
     return (
       userAgent.includes('minipay') ||
-      (typeof window.ethereum !== 'undefined' && window.ethereum.isMiniPay === true)
+      (typeof window.ethereum !== 'undefined' &&
+        window.ethereum.isMiniPay === true)
     );
   }, []);
 
@@ -82,7 +90,6 @@ function useWeb3State() {
           provider: window.ethereum,
           isInApp: true,
         });
-        // If in MiniPay, only show MiniPay option
         setInstalledWallets(wallets);
         return;
       }
@@ -91,13 +98,16 @@ function useWeb3State() {
       const walletChecks = [
         {
           name: 'MetaMask',
-          check: () => window.ethereum?.isMetaMask && !window.ethereum?.isBraveWallet,
+          check: () =>
+            window.ethereum?.isMetaMask && !window.ethereum?.isBraveWallet,
           provider: () => window.ethereum,
           downloadUrl: 'https://metamask.io/download/',
         },
         {
           name: 'Coinbase Wallet',
-          check: () => window.ethereum?.isCoinbaseWallet || window.coinbaseWalletExtension,
+          check: () =>
+            window.ethereum?.isCoinbaseWallet ||
+            window.coinbaseWalletExtension,
           provider: () => window.coinbaseWalletExtension || window.ethereum,
           downloadUrl: 'https://www.coinbase.com/wallet/downloads',
         },
@@ -133,13 +143,13 @@ function useWeb3State() {
         },
         {
           name: 'BitKeep',
-          check: () => window.bitkeep?.ethereum || window.ethereum?.isBitKeep,
+          check: () =>
+            window.bitkeep?.ethereum || window.ethereum?.isBitKeep,
           provider: () => window.bitkeep?.ethereum || window.ethereum,
           downloadUrl: 'https://bitkeep.com/download',
         },
       ];
 
-      // Check each wallet
       walletChecks.forEach(({ name, check, provider, downloadUrl }) => {
         const installed = check();
         wallets.push({
@@ -151,7 +161,6 @@ function useWeb3State() {
         });
       });
 
-      // If window.ethereum exists but no specific wallet was detected, add generic option
       if (window.ethereum && !wallets.some((w) => w.installed)) {
         wallets.unshift({
           name: 'Injected Wallet',
@@ -165,12 +174,8 @@ function useWeb3State() {
       setInstalledWallets(wallets);
     };
 
-    // Initial detection
     detectWallets();
-
-    // Re-check after a short delay (some wallets inject asynchronously)
     const timer = setTimeout(detectWallets, 1000);
-
     return () => clearTimeout(timer);
   }, [isMiniPayInApp]);
 
@@ -209,7 +214,6 @@ function useWeb3State() {
     }
   }, []);
 
-  // Save connection state to localStorage
   const saveToLocalStorage = useCallback(
     (
       connectedAddress: string,
@@ -219,14 +223,19 @@ function useWeb3State() {
     ) => {
       localStorage.setItem('feelspace_wallet_address', connectedAddress);
       localStorage.setItem('feelspace_is_connected', 'true');
-      localStorage.setItem('feelspace_history', JSON.stringify(connectedHistory));
-      localStorage.setItem('feelspace_balances', JSON.stringify(connectedBalances));
+      localStorage.setItem(
+        'feelspace_history',
+        JSON.stringify(connectedHistory)
+      );
+      localStorage.setItem(
+        'feelspace_balances',
+        JSON.stringify(connectedBalances)
+      );
       localStorage.setItem('feelspace_games', JSON.stringify(connectedGames));
     },
     []
   );
 
-  // Clear localStorage
   const clearLocalStorage = useCallback(() => {
     localStorage.removeItem('feelspace_wallet_address');
     localStorage.removeItem('feelspace_is_connected');
@@ -235,10 +244,8 @@ function useWeb3State() {
     localStorage.removeItem('feelspace_games');
   }, []);
 
-  // Auto-cleanup on window close/browser close
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Clear localStorage when browser/window closes
       clearLocalStorage();
     };
 
@@ -254,11 +261,13 @@ function useWeb3State() {
       try {
         console.log('Starting wallet connection with wallet:', walletName);
 
-        // 1. Pick provider
+        // 1. Determine provider
         let provider: any;
 
         if (walletName) {
-          const selectedWallet = installedWallets.find((w) => w.name === walletName);
+          const selectedWallet = installedWallets.find(
+            (w) => w.name === walletName
+          );
           if (selectedWallet?.provider) {
             provider = selectedWallet.provider;
             console.log(`Using ${walletName} provider`);
@@ -284,7 +293,9 @@ function useWeb3State() {
 
         // 2. Request accounts
         console.log('Requesting accounts...');
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        const accounts = await provider.request({
+          method: 'eth_requestAccounts',
+        });
 
         if (!accounts || accounts.length === 0) {
           throw new Error('No accounts returned from provider');
@@ -297,29 +308,42 @@ function useWeb3State() {
         setIsConnected(true);
 
         // 3. Read current chain
-        let chainId = await provider.request({ method: 'eth_chainId' });
-        console.log('Current chainId:', chainId);
-        setChainId(chainId);
+        let currentChainId = await provider.request({
+          method: 'eth_chainId',
+        });
+        console.log('Current chainId:', currentChainId);
+        setChainId(currentChainId);
 
         // 4. Ensure we are on Celo Sepolia BEFORE touching the contract
-        if (chainId !== '0xaa044c') {
+        if (currentChainId !== CELO_SEPOLIA_CHAIN_ID) {
           try {
             console.log('Attempting to switch to Celo Sepolia...');
             await provider.request({
               method: 'wallet_switchEthereumChain',
-              params: [{ chainId: '0xaa044c' }],
+              params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
             });
             console.log('Successfully switched to Celo Sepolia');
           } catch (switchError: any) {
-            console.warn('Chain switch error:', switchError.code, switchError.message);
-            if (switchError.code === 4902) {
+            console.warn(
+              'Chain switch error:',
+              switchError.code,
+              switchError.message
+            );
+
+            const msg = String(switchError.message || '').toLowerCase();
+            const needsAdd =
+              switchError.code === 4902 ||
+              msg.includes('unrecognized chain id') ||
+              msg.includes('chain 0x');
+
+            if (needsAdd) {
               try {
                 console.log('Adding Celo Sepolia chain...');
                 await provider.request({
                   method: 'wallet_addEthereumChain',
                   params: [
                     {
-                      chainId: '0xaa044c',
+                      chainId: CELO_SEPOLIA_CHAIN_ID,
                       chainName: 'Celo Sepolia Testnet',
                       nativeCurrency: {
                         name: 'CELO',
@@ -327,13 +351,27 @@ function useWeb3State() {
                         decimals: 18,
                       },
                       rpcUrls: ['https://forno.celo-sepolia.celo-testnet.org'],
-                      blockExplorerUrls: ['https://celo-sepolia.blockscout.com'],
+                      blockExplorerUrls: [
+                        'https://celo-sepolia.blockscout.com',
+                      ],
                     },
                   ],
                 });
                 console.log('Successfully added Celo Sepolia chain');
-              } catch (addError) {
-                console.error('Failed to add Celo Sepolia', addError);
+
+                // Explicitly switch after adding
+                await provider.request({
+                  method: 'wallet_switchEthereumChain',
+                  params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
+                });
+              } catch (addError: any) {
+                console.error(
+                  'Failed to add/switch to Celo Sepolia',
+                  addError
+                );
+                if (addError.code === 4001) {
+                  clearLocalStorage();
+                }
                 throw addError;
               }
             } else if (switchError.code === 4001) {
@@ -345,13 +383,15 @@ function useWeb3State() {
             }
           }
 
-          // Refresh chainId after switching
-          chainId = await provider.request({ method: 'eth_chainId' });
-          console.log('New chainId:', chainId);
-          setChainId(chainId);
+          // Refresh chainId after switching/adding
+          currentChainId = await provider.request({
+            method: 'eth_chainId',
+          });
+          console.log('New chainId:', currentChainId);
+          setChainId(currentChainId);
         }
 
-        // 5. Basic native balance (CELO)
+        // 5. Get native balance
         const balanceHex = await provider.request({
           method: 'eth_getBalance',
           params: [account, 'latest'],
@@ -386,28 +426,34 @@ function useWeb3State() {
         }
 
         // 10. Fetch game sessions
-        const chainGameSessions = await web3Service.getUserGameSessions(account);
-        const formattedGameSessions: GameSessionEntry[] = (chainGameSessions || []).map(
-          (session: any) => {
-            const tsSecRaw = session.timestamp as bigint | number;
-            const tsSec =
-              typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
-
-            return {
-              timestamp: tsSec * 1000,
-              gameId: session.gameId,
-              score: Number(session.score),
-              txHash: undefined,
-            };
-          }
+        const chainGameSessions = await web3Service.getUserGameSessions(
+          account
         );
+        const formattedGameSessions: GameSessionEntry[] = (
+          chainGameSessions || []
+        ).map((session: any) => {
+          const tsSecRaw = session.timestamp as bigint | number;
+          const tsSec =
+            typeof tsSecRaw === 'bigint'
+              ? Number(tsSecRaw)
+              : Number(tsSecRaw);
+
+          return {
+            timestamp: tsSec * 1000,
+            gameId: session.gameId,
+            score: Number(session.score),
+            txHash: undefined,
+          };
+        });
 
         // 11. Format history for UI
         const formattedHistory: EmotionEntry[] = (chainHistory || []).map(
           (entry: any) => {
             const tsSecRaw = entry.timestamp as bigint | number;
             const tsSec =
-              typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
+              typeof tsSecRaw === 'bigint'
+                ? Number(tsSecRaw)
+                : Number(tsSecRaw);
 
             const emotionType = entry.emotionType as string;
             const key = `${account.toLowerCase()}-${tsSec}-${emotionType}`;
@@ -432,7 +478,6 @@ function useWeb3State() {
         setHistory(formattedHistory);
         setGameSessions(formattedGameSessions);
 
-        // 12. Persist locally
         saveToLocalStorage(account, formattedHistory, newBalances, newGames);
 
         setShowWalletModal(false);
@@ -470,38 +515,33 @@ function useWeb3State() {
         }
       }
     },
-    [toast, saveToLocalStorage, clearLocalStorage, installedWallets]
+    [toast, saveToLocalStorage, clearLocalStorage, installedWallets, CELO_SEPOLIA_CHAIN_ID]
   );
 
-  const disconnect = useCallback(
-    () => {
-      setAddress(null);
-      setIsConnected(false);
-      setBalance('0');
-      setBalances({});
-      setOwnedGames([]);
-      setHistory([]);
-      setGameSessions([]);
-      setChainId(null);
-      setShowWalletModal(false);
+  const disconnect = useCallback(() => {
+    setAddress(null);
+    setIsConnected(false);
+    setBalance('0');
+    setBalances({});
+    setOwnedGames([]);
+    setHistory([]);
+    setGameSessions([]);
+    setChainId(null);
+    setShowWalletModal(false);
 
-      // Clear all localStorage items
-      clearLocalStorage();
+    clearLocalStorage();
 
-      // Also clear any wallet-specific storage
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('feelspace_') || key.startsWith('wallet')) {
-          localStorage.removeItem(key);
-        }
-      });
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('feelspace_') || key.startsWith('wallet')) {
+        localStorage.removeItem(key);
+      }
+    });
 
-      toast({
-        title: 'Wallet Disconnected',
-        description: 'Your wallet has been disconnected and all data cleared.',
-      });
-    },
-    [clearLocalStorage, toast]
-  );
+    toast({
+      title: 'Wallet Disconnected',
+      description: 'Your wallet has been disconnected and all data cleared.',
+    });
+  }, [clearLocalStorage, toast]);
 
   const buyGame = useCallback(
     async (gameId: string) => {
@@ -510,7 +550,6 @@ function useWeb3State() {
         const { txHash, receipt } = await web3Service.buyGame(gameId);
 
         setOwnedGames((prev) => [...prev, gameId]);
-        // Optional: you can refresh on-chain FEELS here if purchase burns tokens
 
         toast({
           title: 'Game Purchased',
@@ -522,7 +561,8 @@ function useWeb3State() {
         console.error('Error buying game:', error);
         toast({
           title: 'Purchase Failed',
-          description: error?.message || 'Failed to purchase game on blockchain.',
+          description:
+            error?.message || 'Failed to purchase game on blockchain.',
           variant: 'destructive',
         });
         return false;
@@ -535,7 +575,10 @@ function useWeb3State() {
     async (gameId: string, score: number) => {
       try {
         await web3Service.initialize();
-        const { txHash, receipt } = await web3Service.completeGame(gameId, score);
+        const { txHash, receipt } = await web3Service.completeGame(
+          gameId,
+          score
+        );
 
         const newSession: GameSessionEntry = {
           gameId,
@@ -546,16 +589,19 @@ function useWeb3State() {
 
         try {
           if (address) {
-            const response = await fetch('http://localhost:5500/api/games/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                walletAddress: address,
-                gameId,
-                score,
-                txHash,
-              }),
-            });
+            const response = await fetch(
+              'http://localhost:5500/api/games/complete',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  walletAddress: address,
+                  gameId,
+                  score,
+                  txHash,
+                }),
+              }
+            );
 
             if (!response.ok) {
               throw new Error('Failed to record game session to database');
@@ -563,29 +609,39 @@ function useWeb3State() {
 
             const dbEntry = await response.json();
             newSession._id = dbEntry.data._id;
-            newSession.timestamp = new Date(dbEntry.data.timestamp).getTime();
+            newSession.timestamp = new Date(
+              dbEntry.data.timestamp
+            ).getTime();
             newSession.txHash = dbEntry.data.txHash;
           }
         } catch (error) {
-          console.error('Error recording game session to database:', error);
+          console.error(
+            'Error recording game session to database:',
+            error
+          );
         }
 
         const newSessions = [newSession, ...gameSessions];
         setGameSessions(newSessions);
 
-        // Reward is already calculated and applied on-chain; just refresh FEELS from contract
         if (address) {
-          const feelsBalanceStr = await web3Service.getUserFeelsBalance(address);
+          const feelsBalanceStr = await web3Service.getUserFeelsBalance(
+            address
+          );
           const feelsBalance = Number(feelsBalanceStr);
           const updatedBalances = { ...balances, FEELS: feelsBalance };
           setBalances(updatedBalances);
           saveToLocalStorage(address, history, updatedBalances, ownedGames);
-          localStorage.setItem('feelspace_games', JSON.stringify(ownedGames));
+          localStorage.setItem(
+            'feelspace_games',
+            JSON.stringify(ownedGames)
+          );
         }
 
         toast({
           title: 'Game Completed',
-          description: 'Your game session has been recorded on the blockchain.',
+          description:
+            'Your game session has been recorded on the blockchain.',
         });
       } catch (error: any) {
         console.error('Error recording game session:', error);
@@ -597,7 +653,15 @@ function useWeb3State() {
         });
       }
     },
-    [gameSessions, address, balances, ownedGames, history, saveToLocalStorage, toast]
+    [
+      gameSessions,
+      address,
+      balances,
+      ownedGames,
+      history,
+      saveToLocalStorage,
+      toast,
+    ]
   );
 
   const logEmotion = useCallback(
@@ -623,18 +687,21 @@ function useWeb3State() {
 
         try {
           if (address) {
-            const response = await fetch('http://localhost:5500/api/emotions/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                walletAddress: address,
-                emotion,
-                intensity,
-                notes,
-                earned: reward,
-                txHash,
-              }),
-            });
+            const response = await fetch(
+              'http://localhost:5500/api/emotions/log',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  walletAddress: address,
+                  emotion,
+                  intensity,
+                  notes,
+                  earned: reward,
+                  txHash,
+                }),
+              }
+            );
 
             if (!response.ok) {
               throw new Error('Failed to log emotion to database');
@@ -642,7 +709,9 @@ function useWeb3State() {
 
             const dbEntry = await response.json();
             newEntry._id = dbEntry.data._id;
-            newEntry.timestamp = new Date(dbEntry.data.timestamp).getTime();
+            newEntry.timestamp = new Date(
+              dbEntry.data.timestamp
+            ).getTime();
             newEntry.txHash = dbEntry.data.txHash;
           }
         } catch (error) {
@@ -651,10 +720,11 @@ function useWeb3State() {
 
         const newHistory = [newEntry, ...history];
 
-        // On-chain logEmotion already minted 10 FEELS; refresh from contract instead of manual math
         let newBalances = { ...balances };
         if (address) {
-          const feelsBalanceStr = await web3Service.getUserFeelsBalance(address);
+          const feelsBalanceStr = await web3Service.getUserFeelsBalance(
+            address
+          );
           const feelsBalance = Number(feelsBalanceStr);
           newBalances = { ...newBalances, FEELS: feelsBalance };
         }
@@ -674,7 +744,8 @@ function useWeb3State() {
         console.error('Error logging emotion:', error);
         toast({
           title: 'Transaction Failed',
-          description: error?.message || 'Failed to log emotion on blockchain.',
+          description:
+            error?.message || 'Failed to log emotion on blockchain.',
           variant: 'destructive',
         });
       }
@@ -693,8 +764,8 @@ function useWeb3State() {
         }
       });
 
-      window.ethereum.on('chainChanged', (chainId: string) => {
-        setChainId(chainId);
+      window.ethereum.on('chainChanged', (newChainId: string) => {
+        setChainId(newChainId);
         window.location.reload();
       });
     }
@@ -721,7 +792,9 @@ function useWeb3State() {
 }
 
 // Create a context so the state can be shared across the app
-const Web3Context = createContext<ReturnType<typeof useWeb3State> | null>(null);
+const Web3Context = createContext<ReturnType<typeof useWeb3State> | null>(
+  null
+);
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   const web3 = useWeb3State();
