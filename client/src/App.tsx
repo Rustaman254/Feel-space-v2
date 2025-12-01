@@ -10,6 +10,7 @@ import Game from "@/pages/Game";
 import GamesPage from "@/pages/Games";
 import HistoryPage from "@/pages/History";
 import GameSessionsPage from "@/pages/GameSessions";
+import Community from "@/pages/Community";
 import { Layout } from "@/components/layout/Layout";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
         <Route path="/games" component={GamesPage} />
         <Route path="/history" component={HistoryPage} />
         <Route path="/sessions" component={GameSessionsPage} />
+        <Route path="/community" component={Community} />
         <Route path="/game/:type" component={Game} />
         <Route component={NotFound} />
       </Switch>
