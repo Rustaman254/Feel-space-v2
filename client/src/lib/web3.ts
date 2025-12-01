@@ -4,15 +4,28 @@ import deployedAddresses from '../contracts/deployed-addresses.json';
 const CONTRACT_ADDRESS = deployedAddresses.EmotionTracker as string;
 
 const ABI = [
+  // core actions
   "function logEmotion(string _emotionType, uint256 _intensity, string _notes) public",
   "function completeGame(string _gameId, uint256 _score) public",
   "function buyGame(string _gameId) public",
+
+  // user history
   "function getHistory() public view returns (tuple(uint256 timestamp, string emotionType, uint256 intensity, string notes)[])",
   "function getUserHistory(address user) public view returns (tuple(uint256 timestamp, string emotionType, uint256 intensity, string notes)[])",
+
+  // game sessions
   "function getUserGameSessions(address user) public view returns (tuple(uint256 timestamp, string gameId, uint256 score, uint256 reward)[])",
+
+  // balances / ownership
   "function getUserBalance(address user) public view returns (uint256)",
   "function balances(address user) public view returns (uint256)",
   "function hasGame(address user, string gameId) public view returns (bool)",
+
+  // NEW: community views
+  "function getRecentPublicEmotions(uint256 limit) public view returns (tuple(address user,uint256 timestamp,string emotionType,uint256 intensity,uint256 reward)[])",
+  "function getLeaderboard(uint256 limit) public view returns (tuple(address user,uint256 feels,uint256 gamesPlayed)[])",
+
+  // events
   "event EmotionLogged(address indexed user, string emotionType, uint256 timestamp)",
   "event GamePurchased(address indexed user, string gameId, uint256 price)",
   "event TokensEarned(address indexed user, uint256 amount, string reason)",
@@ -29,7 +42,7 @@ export class Web3Service {
       throw new Error('No wallet found');
     }
 
-    // BrowserProvider uses the wallet's network; ensure MetaMask is on Celo Sepolia
+    // BrowserProvider uses the wallet's network; ensure wallet is on Celo Sepolia
     this.provider = new ethers.BrowserProvider(window.ethereum);
     this.signer = await this.provider.getSigner();
     this.contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, this.signer);
@@ -96,6 +109,33 @@ export class Web3Service {
     const filter = this.contract!.filters.EmotionLogged(address);
     const events = await this.contract!.queryFilter(filter, 0, 'latest');
     return events;
+  }
+
+  // NEW: recent public emotions for community feed
+  async getRecentPublicEmotions(limit: number = 20) {
+    this.ensureContract();
+    const res = await this.contract!.getRecentPublicEmotions(limit);
+    return res as Array<{
+      user: string;
+      timestamp: bigint;
+      emotionType: string;
+      intensity: bigint;
+      reward: bigint;
+    }>;
+  }
+
+  // NEW: leaderboard entries (sorted client-side)
+  async getLeaderboard(limit: number = 20) {
+    this.ensureContract();
+    const res = await this.contract!.getLeaderboard(limit);
+    const sorted = [...res].sort(
+      (a: any, b: any) => Number(b.feels) - Number(a.feels)
+    );
+    return sorted as Array<{
+      user: string;
+      feels: bigint;
+      gamesPlayed: bigint;
+    }>;
   }
 
   getContractAddress(): string {
