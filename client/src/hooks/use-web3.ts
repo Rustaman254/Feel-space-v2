@@ -235,6 +235,20 @@ function useWeb3State() {
     localStorage.removeItem('feelspace_games');
   }, []);
 
+  // Auto-cleanup on window close/browser close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Clear localStorage when browser/window closes
+      clearLocalStorage();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [clearLocalStorage]);
+
   const connect = useCallback(
     async (walletName?: string) => {
       try {
