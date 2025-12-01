@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BubblePop } from '@/components/games/BubblePop';
 import { MemoryMatch } from '@/components/games/MemoryMatch';
 import { Breathing } from '@/components/games/Breathing';
+import { TicTacToe } from '@/components/games/TicTacToe';
 import { motion } from 'framer-motion';
 
 export default function Game() {
@@ -17,28 +18,31 @@ export default function Game() {
   };
 
   const getGameComponent = () => {
-    switch(gameType) {
-      case 'bubble': return <BubblePop onComplete={handleComplete} />;
-      case 'memory': return <MemoryMatch onComplete={handleComplete} />;
-      case 'breathing': return <Breathing onComplete={handleComplete} />;
+    switch (gameType) {
+      case 'bubble': return <BubblePop />;
+      case 'memory': return <MemoryMatch />;
+      case 'breathing': return <Breathing />;
+      case 'ticTacToe': return <TicTacToe />;
       default: return <div>Game not found</div>;
     }
   };
 
   const getGameTitle = () => {
-    switch(gameType) {
+    switch (gameType) {
       case 'bubble': return 'Bubble Pop';
       case 'memory': return 'Mind Match';
       case 'breathing': return 'Box Breathing';
+      case 'ticTacToe': return 'Tic Tac Toe';
       default: return 'Game';
     }
   };
 
   const getGameSubtitle = () => {
-    switch(gameType) {
+    switch (gameType) {
       case 'bubble': return 'Stress Relief Session';
       case 'memory': return 'Focus Enhancement Session';
       case 'breathing': return 'Calm Regulation Session';
+      case 'ticTacToe': return 'Strategy Session';
       default: return '';
     }
   };
@@ -61,7 +65,7 @@ export default function Game() {
         </div>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}

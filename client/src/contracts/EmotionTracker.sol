@@ -36,13 +36,22 @@ contract EmotionTracker {
     // Mapping to track last check-in time to prevent spamming
     mapping(address => uint256) public lastCheckIn;
 
+    // Game Session Tracking
+    struct GameSession {
+        uint256 timestamp;
+        string gameId;
+        uint256 score;
+    }
+
+    mapping(address => GameSession[]) public userGameSessions;
+
     // Event emitted when a new emotion is logged
     event EmotionLogged(address indexed user, string emotionType, uint256 timestamp);
     event GamePurchased(address indexed user, string gameId, uint256 price);
     event TokensEarned(address indexed user, uint256 amount, string reason);
 
     uint256 public constant REWARD_PER_ENTRY = 10 ether; // 10 FEELS
-    uint256 public constant REWARD_PER_GAME = 5 ether;   // 5 FEELS
+    uint256 public constant BASE_GAME_REWARD = 5 ether;  // 5 FEELS base
 
     address public owner;
 
@@ -81,15 +90,29 @@ contract EmotionTracker {
     }
 
     /**
-     * @dev Record game completion and reward tokens.
+     * @dev Record game completion and reward tokens based on score.
      */
     function completeGame(string memory _gameId, uint256 _score) public {
         // Verify user has access
         require(games[_gameId].isFree || userGames[msg.sender][_gameId], "Game not owned");
         
+        // Record session
+        GameSession memory newSession = GameSession({
+            timestamp: block.timestamp,
+            gameId: _gameId,
+            score: _score
+        });
+        userGameSessions[msg.sender].push(newSession);
+
+        // Calculate Reward: Base + (Score * 0.01 FEELS)
+        // Assuming score is an integer, we treat it as 0.01 ether per point
+        // Example: Score 100 => 1.00 FEELS
+        uint256 scoreReward = _score * 10**16; // 0.01 ether
+        uint256 totalReward = BASE_GAME_REWARD + scoreReward;
+
         // Reward for playing
-        _mint(msg.sender, REWARD_PER_GAME);
-        emit TokensEarned(msg.sender, REWARD_PER_GAME, "Game Completed");
+        _mint(msg.sender, totalReward);
+        emit TokensEarned(msg.sender, totalReward, "Game Completed");
     }
 
     /**
@@ -120,6 +143,13 @@ contract EmotionTracker {
      */
     function getHistory() public view returns (EmotionEntry[] memory) {
         return userEntries[msg.sender];
+    }
+
+    /**
+     * @dev Get all game sessions for the caller.
+     */
+    function getUserGameSessions() public view returns (GameSession[] memory) {
+        return userGameSessions[msg.sender];
     }
     
     /**

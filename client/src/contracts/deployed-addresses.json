@@ -1,0 +1,6 @@
+{
+    "EmotionTracker": "0x45AF3A9Fba376Ca73aE8f6a480922B5424bBa04B",
+    "network": "celo-sepolia",
+    "rpcUrl": "https://forno.celo-sepolia.celo-testnet.org",
+    "deployedAt": "2025-01-01T00:00:00.000Z"
+}

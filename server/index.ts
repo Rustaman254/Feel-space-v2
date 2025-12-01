@@ -1,7 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
+import { registerRoutes } from "./routes.js";
+import { serveStatic } from "./static.js";
 import { createServer } from "http";
+import helmet from "helmet";
+import cors from "cors";
+import morgan from "morgan";
+import { connectDatabase } from "./config/database.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import { logger } from "./utils/logger.js";
+import { env } from "./config/env.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -10,6 +17,21 @@ declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
   }
+}
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false,
+}));
+
+app.use(cors({
+  origin: env.NODE_ENV === 'production' ? false : '*',
+  credentials: true,
+}));
+
+// Logging middleware
+if (env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
 }
 
 app.use(
@@ -60,23 +82,21 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Connect to MongoDB
+  await connectDatabase();
+
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Error handling middleware (must be after routes)
+  app.use(errorHandler);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
+  if (env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
-    const { setupVite } = await import("./vite");
+    const { setupVite } = await import("./vite.js");
     await setupVite(httpServer, app);
   }
 
@@ -84,7 +104,7 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = parseInt(env.PORT || "5000", 10);
   httpServer.listen(
     {
       port,
@@ -93,6 +113,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      logger.info(`Server running in ${env.NODE_ENV} mode on port ${port}`);
     },
   );
 })();
