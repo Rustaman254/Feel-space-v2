@@ -7,10 +7,26 @@ import { MemoryMatch } from '@/components/games/MemoryMatch';
 import { Breathing } from '@/components/games/Breathing';
 import { TicTacToe } from '@/components/games/TicTacToe';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 export default function Game() {
   const [match, params] = useRoute('/game/:type');
   const gameType = params?.type;
+
+  const getGameTitle = () => {
+    switch (gameType) {
+      case 'bubble': return 'Bubble Pop';
+      case 'memory': return 'Mind Match';
+      case 'breathing': return 'Box Breathing';
+      case 'tictactoe': return 'Tic Tac Toe';
+      default: return 'Game';
+    }
+  };
+
+  useEffect(() => {
+    const title = getGameTitle();
+    document.title = `Feel Space | ${title}`;
+  }, [gameType]);
 
   const handleComplete = (score: number) => {
     // Could submit score to contract here
@@ -27,15 +43,7 @@ export default function Game() {
     }
   };
 
-  const getGameTitle = () => {
-    switch (gameType) {
-      case 'bubble': return 'Bubble Pop';
-      case 'memory': return 'Mind Match';
-      case 'breathing': return 'Box Breathing';
-      case 'tictactoe': return 'Tic Tac Toe';
-      default: return 'Game';
-    }
-  };
+
 
   const getGameSubtitle = () => {
     switch (gameType) {

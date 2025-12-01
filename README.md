@@ -99,3 +99,45 @@ npx hardhat run script/deploy.ts --network celo-sepolia
 ## 📄 License
 
 MIT
+
+## 📂 Project Structure
+
+```
+feel-space/
+├── client/                 # Frontend Application
+│   ├── public/             # Static assets
+│   └── src/
+│       ├── components/     # React components (Games, Layout, UI)
+│       ├── contracts/      # ABI and address configs
+│       ├── hooks/          # Custom hooks (useWeb3)
+│       ├── lib/            # Utilities and Web3 service
+│       └── pages/          # Application pages (Home, Games, History)
+├── contracts/              # Smart Contracts
+│   └── EmotionTracker.sol  # Main Celo contract
+├── script/                 # Build scripts
+│   └── build.ts            # Full stack build script
+├── server/                 # Backend API (Express)
+├── .env                    # Environment variables
+├── package.json            # Project dependencies and scripts
+└── vite.config.ts          # Vite configuration
+```
+
+## ☁️ Deployment on Vercel
+
+This project is optimized for deployment on **Vercel**.
+
+1.  **Push to GitHub**: Ensure your project is pushed to a GitHub repository.
+2.  **Import Project**:
+    - Go to your Vercel Dashboard.
+    - Click **"Add New..."** -> **"Project"**.
+    - Import your `feel-space` repository.
+3.  **Configure Project**:
+    - **Framework Preset**: Vercel should automatically detect **Vite**.
+    - **Root Directory**: Leave as `./` (Root).
+    - **Build Command**: `pnpm run build` (or `npm run build`).
+    - **Output Directory**: `dist/public`
+      - *Note: Our build script outputs the frontend to `dist/public`, so you must override the default `dist` setting.*
+    - **Environment Variables**: Add the necessary variables from your `.env` file (e.g., `VITE_...` variables if you have any, though currently most are backend-focused).
+4.  **Deploy**: Click **Deploy**.
+
+Your application will be live in a few minutes! 🚀

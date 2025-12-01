@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Gamepad2, Zap, CloudRain, Smile, Calendar, Trophy, AlertCircle, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
@@ -72,6 +72,10 @@ const CELO_SEPOLIA_EXPLORER_BASE = 'https://celo-sepolia.blockscout.com';
 const TX_PATH = '/tx/';
 
 export default function GameSessionsPage() {
+  useEffect(() => {
+    document.title = 'Feel Space | Sessions';
+  }, []);
+
   const { gameSessions, isConnected } = useWeb3();
 
   if (!isConnected) {

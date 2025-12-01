@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Smile, Zap, CloudRain, Frown, Lock, CheckCircle, Coins, Gamepad2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,10 @@ const GAMES = [
 ];
 
 export default function GamesPage() {
+  useEffect(() => {
+    document.title = 'Feel Space | Arcade';
+  }, []);
+
   const { balances, buyGame, ownedGames, isConnected } = useWeb3();
   const [purchasing, setPurchasing] = useState<string | null>(null);
 

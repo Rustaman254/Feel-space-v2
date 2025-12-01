@@ -80,9 +80,6 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.3",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "@replit/vite-plugin-cartographer": "^0.4.4",
-    "@replit/vite-plugin-dev-banner": "^0.1.1",
-    "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@tailwindcss/vite": "^4.1.14",
     "@typechain/hardhat": "^9.1.0",
     "@types/cors": "^2.8.19",

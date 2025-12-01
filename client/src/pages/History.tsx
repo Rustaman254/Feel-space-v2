@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -17,6 +18,7 @@ import { format } from 'date-fns';
 import { useWeb3 } from '@/hooks/use-web3';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
+import { useEffect } from 'react';
 
 
 const EMOTION_CONFIG: Record<
@@ -41,6 +43,10 @@ const CELO_SEPOLIA_EXPLORER_BASE = 'https://celo-sepolia.blockscout.com';
 const TX_PATH = '/tx/';
 
 export default function HistoryPage() {
+  useEffect(() => {
+    document.title = 'Feel Space | History';
+  }, []);
+
   const { history, isConnected } = useWeb3();
 
   console.log(history)
@@ -118,7 +124,7 @@ export default function HistoryPage() {
 
           return (
             <motion.div
-              key={`${entry.timestamp}-${idx}`}
+              key={`${entry.timestamp} -${idx} `}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
@@ -190,9 +196,8 @@ export default function HistoryPage() {
                             {Array.from({ length: 10 }).map((_, i) => (
                               <div
                                 key={i}
-                                className={`w-1.5 h-3 rounded-sm ${
-                                  i < entry.intensity ? 'bg-black' : 'bg-slate-200'
-                                }`}
+                                className={`w-1.5 h-3 rounded-sm ${i < entry.intensity ? 'bg-black' : 'bg-slate-200'
+                                  }`}
                               />
                             ))}
                           </div>

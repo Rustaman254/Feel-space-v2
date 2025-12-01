@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { Smile, Frown, CloudRain, Zap, ArrowRight, Flame, Sun, BatteryCharging, Heart, Wallet, Sparkles } from 'lucide-react';
@@ -82,16 +82,20 @@ const EMOTIONS = [
 ];
 
 export default function Home() {
+  useEffect(() => {
+    document.title = 'Feel Space | Home';
+  }, []);
+
   const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
   const [showEmotionDialog, setShowEmotionDialog] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { 
-    isConnected, 
-    logEmotion, 
-    history, 
+  const {
+    isConnected,
+    logEmotion,
+    history,
     setShowWalletModal,
-    installedWallets 
+    installedWallets
   } = useWeb3();
 
   const handleConnectWallet = () => {
@@ -107,7 +111,7 @@ export default function Home() {
   // If wallet not connected, show connection gate
   if (!isConnected) {
     const installedCount = installedWallets.filter(w => w.installed).length;
-    
+
     return (
       <div className="flex flex-col gap-8 max-w-5xl mx-auto items-center justify-center min-h-[70vh]">
         <motion.div
@@ -120,7 +124,7 @@ export default function Home() {
               <Sparkles className="w-16 h-16 text-primary" />
             </div>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-heading font-black text-black tracking-tighter leading-[0.9]">
             FEEL SPACE
           </h1>
@@ -134,7 +138,7 @@ export default function Home() {
               <p className="text-slate-600 font-medium">
                 Connect your wallet to begin your emotional wellness journey.
               </p>
-              
+
               {installedCount > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
                   <p className="text-sm font-bold text-green-700 flex items-center gap-2">
