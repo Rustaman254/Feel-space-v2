@@ -42,9 +42,16 @@ export class Web3Service {
       throw new Error('No wallet found');
     }
 
-    // BrowserProvider uses the wallet's network; ensure wallet is on Celo Sepolia
     this.provider = new ethers.BrowserProvider(window.ethereum);
     this.signer = await this.provider.getSigner();
+
+    const code = await this.provider.getCode(CONTRACT_ADDRESS);
+    if (!code || code === '0x') {
+      throw new Error(
+        `No contract deployed at ${CONTRACT_ADDRESS} on current network`
+      );
+    }
+
     this.contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, this.signer);
   }
 

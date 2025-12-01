@@ -254,11 +254,10 @@ function useWeb3State() {
       try {
         console.log('Starting wallet connection with wallet:', walletName);
 
-        // Determine which provider to use
-        let provider;
+        // 1. Pick provider
+        let provider: any;
 
         if (walletName) {
-          // Find the specific wallet by name
           const selectedWallet = installedWallets.find((w) => w.name === walletName);
           if (selectedWallet?.provider) {
             provider = selectedWallet.provider;
@@ -266,7 +265,6 @@ function useWeb3State() {
           }
         }
 
-        // Fallback to window.ethereum if no specific provider found
         if (!provider) {
           provider = window.ethereum;
         }
@@ -284,7 +282,7 @@ function useWeb3State() {
 
         console.log('Provider found:', provider);
 
-        // Request account access - this will open the wallet extension
+        // 2. Request accounts
         console.log('Requesting accounts...');
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
 
@@ -298,92 +296,13 @@ function useWeb3State() {
         setAddress(account);
         setIsConnected(true);
 
-        const chainId = await provider.request({ method: 'eth_chainId' });
+        // 3. Read current chain
+        let chainId = await provider.request({ method: 'eth_chainId' });
+        console.log('Current chainId:', chainId);
         setChainId(chainId);
 
-        const balanceHex = await provider.request({
-          method: 'eth_getBalance',
-          params: [account, 'latest'],
-        });
-        const balanceEth = (parseInt(balanceHex, 16) / 1e18).toFixed(4);
-        setBalance(balanceEth);
-
-        // Initialize USER-SPECIFIC data FROM CONTRACT instead of zeros
-        await web3Service.initialize();
-        const feelsBalanceStr = await web3Service.getUserFeelsBalance(account);
-        const feelsBalance = Number(feelsBalanceStr);
-
-        // Fetch base history from contract
-        const chainHistory = await web3Service.getUserHistory(account);
-
-        // Fetch EmotionLogged events for this user to get tx hashes
-        const emotionEvents = await web3Service.getUserEmotionEvents(account);
-
-        // Build txHash map: key `${user}-${timestampSec}-${emotionType}`
-        const txHashMap = new Map<string, string>();
-
-        for (const ev of emotionEvents) {
-          const user = ev.args?.user as string | undefined;
-          const emotionType = ev.args?.emotionType as string | undefined;
-          const ts = ev.args?.timestamp as bigint | number | undefined;
-
-          if (!user || !emotionType || ts === undefined) continue;
-
-          const tsSec = typeof ts === 'bigint' ? Number(ts) : Number(ts);
-          const key = `${user.toLowerCase()}-${tsSec}-${emotionType}`;
-          txHashMap.set(key, ev.transactionHash);
-        }
-
-        // Fetch game sessions from contract
-        const chainGameSessions = await web3Service.getUserGameSessions(account);
-        const formattedGameSessions: GameSessionEntry[] = (chainGameSessions || []).map(
-          (session: any) => {
-            const tsSecRaw = session.timestamp as bigint | number;
-            const tsSec = typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
-
-            return {
-              timestamp: tsSec * 1000,
-              gameId: session.gameId,
-              score: Number(session.score),
-              txHash: undefined, // could hydrate from GameCompleted events if needed
-              // reward: Number(ethers.formatEther(session.reward)) // if you extend interface
-            };
-          }
-        );
-
-        const formattedHistory: EmotionEntry[] = (chainHistory || []).map((entry: any) => {
-          const tsSecRaw = entry.timestamp as bigint | number;
-          const tsSec = typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
-
-          const emotionType = entry.emotionType as string;
-          // Use 'account' here instead of 'address' state which might be stale
-          const key = `${account.toLowerCase()}-${tsSec}-${emotionType}`;
-          const txHash = txHashMap.get(key);
-
-          return {
-            timestamp: tsSec * 1000,
-            emotion: emotionType,
-            intensity: Number(entry.intensity),
-            notes: entry.notes,
-            earned: 10,
-            txHash,
-          };
-        });
-
-        const newBalances = { FEELS: feelsBalance };
-        const newGames: string[] = [];
-
-        setBalances(newBalances);
-        setOwnedGames(newGames);
-        setHistory(formattedHistory);
-        setGameSessions(formattedGameSessions);
-
-        // Save to localStorage
-        saveToLocalStorage(account, formattedHistory, newBalances, newGames);
-
-        // Switch to Celo Sepolia if needed
+        // 4. Ensure we are on Celo Sepolia BEFORE touching the contract
         if (chainId !== '0xaa044c') {
-          // 11142220 in hex
           try {
             console.log('Attempting to switch to Celo Sepolia...');
             await provider.request({
@@ -415,18 +334,106 @@ function useWeb3State() {
                 console.log('Successfully added Celo Sepolia chain');
               } catch (addError) {
                 console.error('Failed to add Celo Sepolia', addError);
+                throw addError;
               }
             } else if (switchError.code === 4001) {
               console.log('User rejected chain switch');
               clearLocalStorage();
+              throw switchError;
             } else {
-              console.warn(
-                'Could not switch chains, but proceeding with connection:',
-                switchError
-              );
+              throw switchError;
             }
           }
+
+          // Refresh chainId after switching
+          chainId = await provider.request({ method: 'eth_chainId' });
+          console.log('New chainId:', chainId);
+          setChainId(chainId);
         }
+
+        // 5. Basic native balance (CELO)
+        const balanceHex = await provider.request({
+          method: 'eth_getBalance',
+          params: [account, 'latest'],
+        });
+        const balanceEth = (parseInt(balanceHex, 16) / 1e18).toFixed(4);
+        setBalance(balanceEth);
+
+        // 6. Initialize contract on the correct chain
+        await web3Service.initialize();
+
+        // 7. Load FEELS balance
+        const feelsBalanceStr = await web3Service.getUserFeelsBalance(account);
+        const feelsBalance = Number(feelsBalanceStr);
+
+        // 8. Fetch on-chain emotion history
+        const chainHistory = await web3Service.getUserHistory(account);
+
+        // 9. Fetch EmotionLogged events to hydrate tx hashes
+        const emotionEvents = await web3Service.getUserEmotionEvents(account);
+        const txHashMap = new Map<string, string>();
+
+        for (const ev of emotionEvents) {
+          const user = ev.args?.user as string | undefined;
+          const emotionType = ev.args?.emotionType as string | undefined;
+          const ts = ev.args?.timestamp as bigint | number | undefined;
+
+          if (!user || !emotionType || ts === undefined) continue;
+
+          const tsSec = typeof ts === 'bigint' ? Number(ts) : Number(ts);
+          const key = `${user.toLowerCase()}-${tsSec}-${emotionType}`;
+          txHashMap.set(key, ev.transactionHash);
+        }
+
+        // 10. Fetch game sessions
+        const chainGameSessions = await web3Service.getUserGameSessions(account);
+        const formattedGameSessions: GameSessionEntry[] = (chainGameSessions || []).map(
+          (session: any) => {
+            const tsSecRaw = session.timestamp as bigint | number;
+            const tsSec =
+              typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
+
+            return {
+              timestamp: tsSec * 1000,
+              gameId: session.gameId,
+              score: Number(session.score),
+              txHash: undefined,
+            };
+          }
+        );
+
+        // 11. Format history for UI
+        const formattedHistory: EmotionEntry[] = (chainHistory || []).map(
+          (entry: any) => {
+            const tsSecRaw = entry.timestamp as bigint | number;
+            const tsSec =
+              typeof tsSecRaw === 'bigint' ? Number(tsSecRaw) : Number(tsSecRaw);
+
+            const emotionType = entry.emotionType as string;
+            const key = `${account.toLowerCase()}-${tsSec}-${emotionType}`;
+            const txHash = txHashMap.get(key);
+
+            return {
+              timestamp: tsSec * 1000,
+              emotion: emotionType,
+              intensity: Number(entry.intensity),
+              notes: entry.notes,
+              earned: 10,
+              txHash,
+            };
+          }
+        );
+
+        const newBalances = { FEELS: feelsBalance };
+        const newGames: string[] = [];
+
+        setBalances(newBalances);
+        setOwnedGames(newGames);
+        setHistory(formattedHistory);
+        setGameSessions(formattedGameSessions);
+
+        // 12. Persist locally
+        saveToLocalStorage(account, formattedHistory, newBalances, newGames);
 
         setShowWalletModal(false);
         toast({
@@ -439,7 +446,6 @@ function useWeb3State() {
         console.error('Error message:', error?.message);
 
         if (error.code === 4001) {
-          console.log('User cancelled wallet connection');
           toast({
             title: 'Connection Cancelled',
             description: 'You cancelled the wallet connection.',
@@ -450,7 +456,8 @@ function useWeb3State() {
         ) {
           toast({
             title: 'Connection Failed',
-            description: 'Wallet error. Try using a different wallet or check your connection.',
+            description:
+              'Wallet error. Try using a different wallet or check your connection.',
             variant: 'destructive',
           });
         } else {
