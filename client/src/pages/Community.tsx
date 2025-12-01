@@ -77,7 +77,9 @@ export default function Community() {
                 await web3Service.initialize();
 
                 // Feed
+                console.log('Fetching community feed...');
                 const rawFeed = await web3Service.getRecentPublicEmotions(20);
+                console.log('Raw feed data:', rawFeed);
                 const feedItems: FeedItem[] = rawFeed.map((f: any) => ({
                     user: f.user,
                     timestamp: Number(f.timestamp) * 1000,
@@ -85,16 +87,20 @@ export default function Community() {
                     intensity: Number(f.intensity),
                     reward: Number(f.reward) / 1e18,
                 }));
+                console.log('Processed feed items:', feedItems);
                 setFeed(feedItems);
 
                 // Leaderboard
+                console.log('Fetching leaderboard...');
                 const rawLb = await web3Service.getLeaderboard(20);
+                console.log('Raw leaderboard data:', rawLb);
                 const lbItems: LeaderboardItem[] = rawLb.map((e: any, idx: number) => ({
                     user: e.user,
                     feels: Number(e.feels) / 1e18,
                     gamesPlayed: Number(e.gamesPlayed),
                     rank: idx + 1,
                 }));
+                console.log('Processed leaderboard items:', lbItems);
                 setLeaderboard(lbItems);
             } catch (e) {
                 console.error('Error loading community data', e);
@@ -201,8 +207,8 @@ export default function Community() {
                 <button
                     onClick={() => setActiveTab('feed')}
                     className={`px-6 py-3 font-bold border-2 border-black rounded-t-lg transition-all ${activeTab === 'feed'
-                            ? 'bg-black text-white -mb-[2px]'
-                            : 'bg-white text-black hover:bg-slate-50'
+                        ? 'bg-black text-white -mb-[2px]'
+                        : 'bg-white text-black hover:bg-slate-50'
                         }`}
                 >
                     Community Feed
@@ -210,8 +216,8 @@ export default function Community() {
                 <button
                     onClick={() => setActiveTab('leaderboard')}
                     className={`px-6 py-3 font-bold border-2 border-black rounded-t-lg transition-all ${activeTab === 'leaderboard'
-                            ? 'bg-black text-white -mb-[2px]'
-                            : 'bg-white text-black hover:bg-slate-50'
+                        ? 'bg-black text-white -mb-[2px]'
+                        : 'bg-white text-black hover:bg-slate-50'
                         }`}
                 >
                     Leaderboard
@@ -279,8 +285,8 @@ export default function Community() {
                                                             <div
                                                                 key={i}
                                                                 className={`w-1.5 h-3 rounded-sm ${i < entry.intensity
-                                                                        ? 'bg-black'
-                                                                        : 'bg-slate-200'
+                                                                    ? 'bg-black'
+                                                                    : 'bg-slate-200'
                                                                     }`}
                                                             />
                                                         ))}
@@ -402,12 +408,12 @@ export default function Community() {
                                             <div className="flex items-center gap-4">
                                                 <div
                                                     className={`w-10 h-10 flex items-center justify-center border-2 border-black rounded-lg font-heading font-black text-lg ${isTopThree
-                                                            ? entry.rank === 1
-                                                                ? 'bg-yellow-400 text-black'
-                                                                : entry.rank === 2
-                                                                    ? 'bg-slate-300 text-black'
-                                                                    : 'bg-orange-400 text-black'
-                                                            : 'bg-white text-black'
+                                                        ? entry.rank === 1
+                                                            ? 'bg-yellow-400 text-black'
+                                                            : entry.rank === 2
+                                                                ? 'bg-slate-300 text-black'
+                                                                : 'bg-orange-400 text-black'
+                                                        : 'bg-white text-black'
                                                         }`}
                                                 >
                                                     {entry.rank}

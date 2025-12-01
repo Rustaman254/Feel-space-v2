@@ -22,8 +22,8 @@ const ABI = [
   "function hasGame(address user, string gameId) public view returns (bool)",
 
   // NEW: community views
-  "function getRecentPublicEmotions(uint256 limit) public view returns (tuple(address user,uint256 timestamp,string emotionType,uint256 intensity,uint256 reward)[])",
-  "function getLeaderboard(uint256 limit) public view returns (tuple(address user,uint256 feels,uint256 gamesPlayed)[])",
+  "function getRecentPublicEmotions(uint256 limit) public view returns (tuple(address user, uint256 timestamp, string emotionType, uint256 intensity, uint256 reward)[])",
+  "function getLeaderboard(uint256 limit) public view returns (tuple(address user, uint256 feels, uint256 gamesPlayed)[])",
 
   // events
   "event EmotionLogged(address indexed user, string emotionType, uint256 timestamp)",
@@ -114,8 +114,8 @@ export class Web3Service {
   // NEW: recent public emotions for community feed
   async getRecentPublicEmotions(limit: number = 20) {
     this.ensureContract();
-    const res = await this.contract!.getRecentPublicEmotions(limit);
-    return res as Array<{
+    const result = await this.contract!.getRecentPublicEmotions(limit);
+    return result as Array<{
       user: string;
       timestamp: bigint;
       emotionType: string;
@@ -124,13 +124,16 @@ export class Web3Service {
     }>;
   }
 
-  // NEW: leaderboard entries (sorted client-side)
+  // NEW: leaderboard entries
   async getLeaderboard(limit: number = 20) {
     this.ensureContract();
-    const res = await this.contract!.getLeaderboard(limit);
-    const sorted = [...res].sort(
-      (a: any, b: any) => Number(b.feels) - Number(a.feels)
+    const result = await this.contract!.getLeaderboard(limit);
+
+    // Sort by FEELS balance (descending)
+    const sorted = [...result].sort((a: any, b: any) =>
+      Number(b.feels) - Number(a.feels)
     );
+
     return sorted as Array<{
       user: string;
       feels: bigint;
