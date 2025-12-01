@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Trophy, RefreshCw } from 'lucide-react';
@@ -21,15 +21,17 @@ const WIN_LINES = [
 export function TicTacToe() {
     const { recordGameSession, isConnected } = useWeb3();
     const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
-    const [currentPlayer, setCurrentPlayer] = useState<Player>('X');
+    const [currentPlayer, setCurrentPlayer] = useState<Player>('X'); // user is always X
     const [winner, setWinner] = useState<Player | 'draw' | null>(null);
     const [moves, setMoves] = useState(0);
+    const [isThinking, setIsThinking] = useState(false); // platform turn flag
 
     const resetGame = () => {
         setBoard(Array(9).fill(null));
         setCurrentPlayer('X');
         setWinner(null);
         setMoves(0);
+        setIsThinking(false);
     };
 
     const calculateWinner = (squares: Player[]): Player | null => {
@@ -43,13 +45,17 @@ export function TicTacToe() {
 
     const handleEndGame = (finalWinner: Player | 'draw', movesCount: number) => {
         let score = 0;
-        if (finalWinner === 'X' || finalWinner === 'O') {
-            // Base 200 + efficiency bonus
-            score = 200 + Math.max(0, 50 - movesCount * 5);
+        if (finalWinner === 'X') {
+            // User win: higher reward
+            score = 300 + Math.max(0, 50 - movesCount * 5);
             playSuccess();
+        } else if (finalWinner === 'O') {
+            // Platform win: small consolation
+            score = 50;
+            playWrong();
         } else {
-            // Draw gives smaller score
-            score = 100;
+            // Draw
+            score = 150;
             playWrong();
         }
 
@@ -58,18 +64,75 @@ export function TicTacToe() {
         playComplete();
 
         if (isConnected) {
-            // store session on-chain and mint FEELS
             recordGameSession('tictactoe', score);
         }
     };
 
+    const statusLabel = () => {
+        if (winner === 'draw') return 'Result: Draw';
+        if (winner === 'X') return 'You win! 🎉';
+        if (winner === 'O') return 'Platform wins 😅';
+        if (currentPlayer === 'X') return 'Your turn';
+        return 'Platform is thinking...';
+    };
+
+    // Platform (O) move effect
+    useEffect(() => {
+        if (!isConnected) return;
+        if (winner) return;
+        if (currentPlayer !== 'O') return;
+
+        const available = board
+            .map((v, i) => (v === null ? i : -1))
+            .filter(i => i !== -1);
+
+        if (available.length === 0) {
+            handleEndGame('draw', moves);
+            return;
+        }
+
+        setIsThinking(true);
+
+        const timeout = setTimeout(() => {
+            // simple AI: random free square
+            const choice = available[Math.floor(Math.random() * available.length)];
+            const nextBoard = board.slice();
+            nextBoard[choice] = 'O';
+            const nextMoves = moves + 1;
+
+            setBoard(nextBoard);
+            setMoves(nextMoves);
+            playMatch();
+
+            const win = calculateWinner(nextBoard);
+            if (win) {
+                handleEndGame(win, nextMoves);
+                setIsThinking(false);
+                return;
+            }
+
+            if (nextBoard.every(square => square !== null)) {
+                handleEndGame('draw', nextMoves);
+                setIsThinking(false);
+                return;
+            }
+
+            setCurrentPlayer('X');
+            setIsThinking(false);
+        }, 600); // small delay to feel more natural
+
+        return () => clearTimeout(timeout);
+    }, [board, currentPlayer, moves, isConnected, winner]);
+
     const handleClick = (index: number) => {
         if (!isConnected) return;
         if (winner) return;
+        if (isThinking) return;
+        if (currentPlayer !== 'X') return; // only user turn
         if (board[index]) return;
 
         const nextBoard = board.slice();
-        nextBoard[index] = currentPlayer;
+        nextBoard[index] = 'X';
         const nextMoves = moves + 1;
 
         setBoard(nextBoard);
@@ -87,13 +150,7 @@ export function TicTacToe() {
             return;
         }
 
-        setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
-    };
-
-    const statusLabel = () => {
-        if (winner === 'draw') return 'Draw!';
-        if (winner === 'X' || winner === 'O') return `Winner: ${winner}`;
-        return `Turn: ${currentPlayer}`;
+        setCurrentPlayer('O'); // hand over to platform
     };
 
     return (
@@ -102,7 +159,9 @@ export function TicTacToe() {
             <div className="absolute top-4 left-0 right-0 px-4 md:px-8 flex justify-between z-20 pointer-events-none">
                 <div className="bg-white px-4 md:px-6 py-2 rounded-lg border-2 border-black shadow-flat-sm">
                     <span className="text-black font-bold uppercase text-xs tracking-wider">Status</span>
-                    <span className="ml-2 text-sm md:text-lg font-black text-black">{statusLabel()}</span>
+                    <span className="ml-2 text-sm md:text-lg font-black text-black">
+                        {statusLabel()}
+                    </span>
                 </div>
                 <div className="bg-white px-4 md:px-6 py-2 rounded-lg border-2 border-black shadow-flat-sm">
                     <span className="text-black font-bold uppercase text-xs tracking-wider">Moves</span>
@@ -117,10 +176,10 @@ export function TicTacToe() {
                         Tic-Tac-Toe
                     </h2>
                     <p className="text-slate-600 font-bold mb-6">
-                        Connect your wallet to play and earn FEELS.
+                        Connect your wallet to play against the platform and earn FEELS.
                     </p>
                     <p className="text-xs font-bold text-slate-400 max-w-xs">
-                        Once connected, each completed game will be stored on-chain and reward FEELS tokens.
+                        You are X, the platform is O. Each completed game is stored on-chain and rewards FEELS tokens.
                     </p>
                 </div>
             )}
@@ -141,7 +200,7 @@ export function TicTacToe() {
                         transition={{ delay: 0.2 }}
                         className="text-4xl font-heading font-black text-black mb-2 uppercase"
                     >
-                        {winner === 'draw' ? 'Draw Game' : 'Game Over'}
+                        {winner === 'draw' ? 'Draw Game' : winner === 'X' ? 'You Win!' : 'Platform Wins'}
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -149,7 +208,11 @@ export function TicTacToe() {
                         transition={{ delay: 0.3 }}
                         className="text-black font-bold text-xl mb-8"
                     >
-                        {winner === 'draw' ? 'Nobody wins this round.' : `Winner: ${winner}`}
+                        {winner === 'draw'
+                            ? 'Well played. Try again for a win.'
+                            : winner === 'X'
+                                ? 'Nice strategy! You outplayed the platform.'
+                                : 'The platform took this one. Try again!'}
                     </motion.p>
                     <Button
                         onClick={resetGame}
@@ -168,13 +231,40 @@ export function TicTacToe() {
                     <motion.button
                         key={index}
                         onClick={() => handleClick(index)}
-                        disabled={!isConnected || Boolean(winner) || Boolean(board[index])}
-                        whileHover={{ scale: isConnected && !winner && !board[index] ? 1.05 : 1 }}
-                        whileTap={{ scale: isConnected && !winner && !board[index] ? 0.95 : 1 }}
+                        disabled={
+                            !isConnected ||
+                            Boolean(winner) ||
+                            Boolean(board[index]) ||
+                            currentPlayer !== 'X' ||
+                            isThinking
+                        }
+                        whileHover={{
+                            scale:
+                                isConnected &&
+                                    !winner &&
+                                    !board[index] &&
+                                    currentPlayer === 'X' &&
+                                    !isThinking
+                                    ? 1.05
+                                    : 1,
+                        }}
+                        whileTap={{
+                            scale:
+                                isConnected &&
+                                    !winner &&
+                                    !board[index] &&
+                                    currentPlayer === 'X' &&
+                                    !isThinking
+                                    ? 0.95
+                                    : 1,
+                        }}
                         className={`
               aspect-square rounded-xl border-4 border-black shadow-flat-sm flex items-center justify-center
               bg-slate-100 text-4xl md:text-5xl font-black
-              ${!isConnected || winner ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}
+              ${!isConnected || winner || isThinking
+                                ? 'cursor-not-allowed opacity-80'
+                                : 'cursor-pointer'
+                            }
             `}
                     >
                         {value && (

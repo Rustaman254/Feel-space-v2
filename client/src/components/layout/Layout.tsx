@@ -11,15 +11,15 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { 
-    address, 
-    isConnected, 
-    balances, 
+  const {
+    address,
+    isConnected,
+    balances,
     disconnect,
     showWalletModal,
     setShowWalletModal,
     installedWallets,
-    connect
+    connect,
   } = useWeb3();
   const [location, setLocation] = useLocation();
 
@@ -35,10 +35,12 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const handleDisconnect = async () => {
-    // Confirm disconnect
-    if (window.confirm('Are you sure you want to disconnect your wallet? All local data will be cleared.')) {
+    if (
+      window.confirm(
+        'Are you sure you want to disconnect your wallet? All local data will be cleared.'
+      )
+    ) {
       disconnect();
-      // Force redirect to home after disconnect
       setLocation('/');
     }
   };
@@ -52,7 +54,9 @@ export function Layout({ children }: LayoutProps) {
             <div className="p-2 bg-accent border-2 border-black rounded-md shadow-flat-sm group-hover:translate-y-1 group-hover:shadow-none transition-all">
               <Sparkles className="w-6 h-6 text-black" />
             </div>
-            <span className="font-heading font-black text-2xl tracking-tight text-black">Feel Space</span>
+            <span className="font-heading font-black text-2xl tracking-tight text-black">
+              Feel Space
+            </span>
           </div>
         </Link>
 
@@ -65,11 +69,10 @@ export function Layout({ children }: LayoutProps) {
               <Link href="/games">
                 <Button
                   variant="ghost"
-                  className={`font-bold border-2 ${
-                    location === '/games'
-                      ? 'bg-slate-100 border-black'
-                      : 'border-transparent hover:bg-slate-50'
-                  }`}
+                  className={`font-bold border-2 ${location === '/games'
+                      ? 'bg-accent/30 border-black text-black'
+                      : 'border-transparent hover:bg-slate-50 text-slate-600'
+                    }`}
                 >
                   <Gamepad2 className="w-4 h-4 mr-2" /> Arcade
                 </Button>
@@ -77,11 +80,10 @@ export function Layout({ children }: LayoutProps) {
               <Link href="/sessions">
                 <Button
                   variant="ghost"
-                  className={`font-bold border-2 ${
-                    location === '/sessions'
-                      ? 'bg-slate-100 border-black'
-                      : 'border-transparent hover:bg-slate-50'
-                  }`}
+                  className={`font-bold border-2 ${location === '/sessions'
+                      ? 'bg-accent/30 border-black text-black'
+                      : 'border-transparent hover:bg-slate-50 text-slate-600'
+                    }`}
                 >
                   <Zap className="w-4 h-4 mr-2" /> Sessions
                 </Button>
@@ -89,11 +91,10 @@ export function Layout({ children }: LayoutProps) {
               <Link href="/history">
                 <Button
                   variant="ghost"
-                  className={`font-bold border-2 ${
-                    location === '/history'
-                      ? 'bg-slate-100 border-black'
-                      : 'border-transparent hover:bg-slate-50'
-                  }`}
+                  className={`font-bold border-2 ${location === '/history'
+                      ? 'bg-accent/30 border-black text-black'
+                      : 'border-transparent hover:bg-slate-50 text-slate-600'
+                    }`}
                 >
                   <History className="w-4 h-4 mr-2" /> History
                 </Button>
@@ -190,9 +191,8 @@ export function Layout({ children }: LayoutProps) {
         <div className="md:hidden fixed bottom-6 left-4 right-4 bg-white border-2 border-black rounded-xl shadow-flat z-50 flex justify-between items-center p-2 overflow-x-auto">
           <Link href="/">
             <div
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${
-                location === '/' ? 'bg-accent/20 text-black' : 'text-slate-400'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${location === '/' ? 'bg-accent/30 text-black' : 'text-slate-400'
+                }`}
             >
               <Home className="w-5 h-5" />
               <span className="text-[9px] font-black uppercase">Home</span>
@@ -200,9 +200,8 @@ export function Layout({ children }: LayoutProps) {
           </Link>
           <Link href="/games">
             <div
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${
-                location === '/games' ? 'bg-accent/20 text-black' : 'text-slate-400'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${location === '/games' ? 'bg-accent/30 text-black' : 'text-slate-400'
+                }`}
             >
               <Gamepad2 className="w-5 h-5" />
               <span className="text-[9px] font-black uppercase">Arcade</span>
@@ -210,9 +209,8 @@ export function Layout({ children }: LayoutProps) {
           </Link>
           <Link href="/sessions">
             <div
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${
-                location === '/sessions' ? 'bg-accent/20 text-black' : 'text-slate-400'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${location === '/sessions' ? 'bg-accent/30 text-black' : 'text-slate-400'
+                }`}
             >
               <Zap className="w-5 h-5" />
               <span className="text-[9px] font-black uppercase">Session</span>
@@ -220,9 +218,8 @@ export function Layout({ children }: LayoutProps) {
           </Link>
           <Link href="/history">
             <div
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${
-                location === '/history' ? 'bg-accent/20 text-black' : 'text-slate-400'
-              }`}
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${location === '/history' ? 'bg-accent/30 text-black' : 'text-slate-400'
+                }`}
             >
               <History className="w-5 h-5" />
               <span className="text-[9px] font-black uppercase">History</span>

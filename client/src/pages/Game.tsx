@@ -22,7 +22,7 @@ export default function Game() {
       case 'bubble': return <BubblePop />;
       case 'memory': return <MemoryMatch />;
       case 'breathing': return <Breathing />;
-      case 'ticTacToe': return <TicTacToe />;
+      case 'tictactoe': return <TicTacToe />;
       default: return <div>Game not found</div>;
     }
   };
@@ -32,7 +32,7 @@ export default function Game() {
       case 'bubble': return 'Bubble Pop';
       case 'memory': return 'Mind Match';
       case 'breathing': return 'Box Breathing';
-      case 'ticTacToe': return 'Tic Tac Toe';
+      case 'tictactoe': return 'Tic Tac Toe';
       default: return 'Game';
     }
   };
@@ -42,7 +42,7 @@ export default function Game() {
       case 'bubble': return 'Stress Relief Session';
       case 'memory': return 'Focus Enhancement Session';
       case 'breathing': return 'Calm Regulation Session';
-      case 'ticTacToe': return 'Strategy Session';
+      case 'tictactoe': return 'Strategy Session';
       default: return '';
     }
   };

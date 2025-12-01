@@ -16,11 +16,11 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Home}/>
-        <Route path="/games" component={GamesPage}/>
-        <Route path="/history" component={HistoryPage}/>
-        <Route path="/sessions" component={GameSessionsPage}/>
-        <Route path="/game/:type" component={Game}/>
+        <Route path="/" component={Home} />
+        <Route path="/games" component={GamesPage} />
+        <Route path="/history" component={HistoryPage} />
+        <Route path="/sessions" component={GameSessionsPage} />
+        <Route path="/game/:type" component={Game} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -30,10 +30,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Web3Provider>
-              <Router />
-            </Web3Provider>
+      <TooltipProvider>
+        <Web3Provider>
+          <Router />
+        </Web3Provider>
       </TooltipProvider>
     </QueryClientProvider>
   );

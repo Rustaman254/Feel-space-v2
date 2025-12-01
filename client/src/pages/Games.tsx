@@ -16,7 +16,7 @@ const GAMES = [
     color: 'bg-primary text-white',
   },
   {
-    id: 'ticTacToe',
+    id: 'tictactoe',
     title: 'Tic Tac Toe',
     description: 'Play against the AI or a friend.',
     price: 0,
