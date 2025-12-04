@@ -2,6 +2,8 @@ import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Web3Provider } from '@/hooks/use-web3';
+import { TutorialProvider } from '@/contexts/TutorialContext';
+import { TutorialOverlay } from '@/components/TutorialOverlay';
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Game from "@/pages/Game";
@@ -33,8 +35,11 @@ function App() {
   return (
     <TooltipProvider>
       <Web3Provider>
-        <Router />
-        <Toaster />
+        <TutorialProvider>
+          <Router />
+          <TutorialOverlay />
+          <Toaster />
+        </TutorialProvider>
       </Web3Provider>
     </TooltipProvider>
   );

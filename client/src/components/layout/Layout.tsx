@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Wallet, Sparkles, LogOut, History, Gamepad2, Home, Zap, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { useWeb3 } from '@/hooks/use-web3';
 import { WalletModal } from '@/components/WalletModal';
+import { DisconnectDialog } from '@/components/DisconnectDialog';
+import { TutorialButton } from '@/components/TutorialButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,6 +24,7 @@ export function Layout({ children }: LayoutProps) {
     connect,
   } = useWeb3();
   const [location, setLocation] = useLocation();
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Redirect to home on logout
   useEffect(() => {
@@ -34,15 +37,14 @@ export function Layout({ children }: LayoutProps) {
     setShowWalletModal(true);
   };
 
-  const handleDisconnect = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to disconnect your wallet? All local data will be cleared.'
-      )
-    ) {
-      disconnect();
-      setLocation('/');
-    }
+  const handleDisconnect = () => {
+    setShowDisconnectDialog(true);
+  };
+
+  const confirmDisconnect = () => {
+    disconnect();
+    setLocation('/');
+    setShowDisconnectDialog(false);
   };
 
   return (
@@ -66,7 +68,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-3">
             {/* Nav Links - Only show when connected */}
             <div className="flex items-center gap-2">
-              <Link href="/games">
+              <Link href="/games" id="nav-games">
                 <Button
                   variant="ghost"
                   className={`font-bold border-2 ${location === '/games'
@@ -88,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
                   <Zap className="w-4 h-4 mr-2" /> Sessions
                 </Button>
               </Link>
-              <Link href="/history">
+              <Link href="/history" id="nav-history">
                 <Button
                   variant="ghost"
                   className={`font-bold border-2 ${location === '/history'
@@ -99,7 +101,7 @@ export function Layout({ children }: LayoutProps) {
                   <History className="w-4 h-4 mr-2" /> History
                 </Button>
               </Link>
-              <Link href="/insights">
+              <Link href="/insights" id="nav-insights">
                 <Button
                   variant="ghost"
                   className={`font-bold border-2 ${location === '/insights'
@@ -110,7 +112,7 @@ export function Layout({ children }: LayoutProps) {
                   <TrendingUp className="w-4 h-4 mr-2" /> Insights
                 </Button>
               </Link>
-              <Link href="/community">
+              <Link href="/community" id="nav-community">
                 <Button
                   variant="ghost"
                   className={`font-bold border-2 ${location === '/community'
@@ -275,6 +277,16 @@ export function Layout({ children }: LayoutProps) {
         installedWallets={installedWallets}
         onSelectWallet={connect}
       />
+
+      {/* Disconnect confirmation dialog */}
+      <DisconnectDialog
+        isOpen={showDisconnectDialog}
+        onClose={() => setShowDisconnectDialog(false)}
+        onConfirm={confirmDisconnect}
+      />
+
+      {/* Tutorial Button */}
+      {isConnected && <TutorialButton />}
 
       <Toaster />
     </div>

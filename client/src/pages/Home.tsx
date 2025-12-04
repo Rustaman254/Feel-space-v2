@@ -223,13 +223,13 @@ export default function Home() {
     setShowEmotionDialog(true);
   };
 
-  const handleEmotionConfirm = (intensity: number, reason: string) => {
-    if (!selectedEmotion) return;
+  const handleEmotionConfirm = async (intensity: number, reason: string) => {
+    if (!selectedEmotion) return; // Keep this check for safety
 
     const emotion = EMOTIONS.find(e => e.id === selectedEmotion);
     if (emotion) {
       const notes = reason.trim() || "Quick check-in";
-      logEmotion(emotion.id, intensity, notes);
+      await logEmotion(emotion.id, intensity, notes); // Make logEmotion awaitable
 
       toast({
         title: "Emotion Logged! +10 FEELS",
@@ -320,7 +320,7 @@ export default function Home() {
       </section>
 
       {/* Emotion Grid */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section id="emotion-grid" className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {EMOTIONS.map((emotion, idx) => {
           const Icon = emotion.icon;
           const isSelected = selectedEmotion === emotion.id;
