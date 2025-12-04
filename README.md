@@ -146,3 +146,93 @@ This project is optimized for deployment on **Vercel**.
 4.  **Deploy**: Click **Deploy**.
 
 Your application will be live in a few minutes! 🚀
+
+## 🚀 Deployment on Render
+
+Feel-Space can be deployed on **Render** with separate services for the frontend and backend.
+
+### Backend Deployment (Node.js API + MongoDB)
+
+1.  **Create a Web Service**:
+    - Go to your [Render Dashboard](https://dashboard.render.com/).
+    - Click **"New +"** -> **"Web Service"**.
+    - Connect your GitHub repository.
+
+2.  **Configure Backend Service**:
+    - **Name**: `feel-space-api` (or your preferred name)
+    - **Region**: Choose closest to your users
+    - **Branch**: `main` (or your deployment branch)
+    - **Root Directory**: Leave blank (uses repository root)
+    - **Runtime**: `Node`
+    - **Build Command**: `npm install`
+    - **Start Command**: `npm run dev` (or `node server/index.ts` for production)
+    - **Instance Type**: Free or Starter (depending on your needs)
+
+3.  **Environment Variables**:
+    Add the following environment variables in the Render dashboard:
+    ```
+    NODE_ENV=production
+    PORT=5500
+    MONGODB_URI=your_mongodb_atlas_connection_string
+    PRIVATE_KEY=your_wallet_private_key_for_deployment
+    ```
+    - **MongoDB**: Use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) for a free cloud database
+    - Get your connection string from Atlas and add it to `MONGODB_URI`
+
+4.  **Deploy**: Click **"Create Web Service"**
+    - Render will automatically deploy your backend
+    - Note the service URL (e.g., `https://feel-space-api.onrender.com`)
+
+### Frontend Deployment (Static Site)
+
+1.  **Create a Static Site**:
+    - In Render Dashboard, click **"New +"** -> **"Static Site"**.
+    - Connect the same GitHub repository.
+
+2.  **Configure Frontend Service**:
+    - **Name**: `feel-space` (or your preferred name)
+    - **Branch**: `main`
+    - **Root Directory**: Leave blank
+    - **Build Command**: `npm run build`
+    - **Publish Directory**: `dist/public`
+
+3.  **Environment Variables** (if needed):
+    ```
+    VITE_API_URL=https://feel-space-api.onrender.com
+    ```
+    - Update your frontend code to use `import.meta.env.VITE_API_URL` instead of `http://localhost:5500`
+
+4.  **Deploy**: Click **"Create Static Site"**
+
+### Post-Deployment Configuration
+
+1.  **Update API URLs in Frontend**:
+    - Replace hardcoded `http://localhost:5500` with your Render backend URL
+    - Use environment variables for flexibility:
+    ```typescript
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5500';
+    ```
+
+2.  **CORS Configuration**:
+    - Update your backend to allow requests from your Render frontend URL
+    - In `server/index.ts`, configure CORS:
+    ```typescript
+    app.use(cors({
+      origin: ['https://feel-space.onrender.com', 'http://localhost:5000'],
+      credentials: true
+    }));
+    ```
+
+3.  **MongoDB Atlas Setup**:
+    - Create a free cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+    - Whitelist Render's IP addresses (or use `0.0.0.0/0` for all IPs)
+    - Create a database user and get the connection string
+
+### Important Notes
+
+- **Free Tier Limitations**: Render's free tier spins down after 15 minutes of inactivity. First request may take 30-60 seconds.
+- **Upgrade for Production**: Consider upgrading to a paid plan for always-on services and better performance.
+- **Auto-Deploy**: Render automatically redeploys when you push to your connected branch.
+- **Logs**: View real-time logs in the Render dashboard for debugging.
+
+Your Feel-Space application will be live at your Render URLs! 🎉
