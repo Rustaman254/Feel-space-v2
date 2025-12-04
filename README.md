@@ -198,20 +198,22 @@ Feel-Space can be deployed on **Render** with separate services for the frontend
 
 3.  **Environment Variables** (if needed):
     ```
-    VITE_API_URL=https://feel-space-api.onrender.com
+    VITE_API_URL=https://feel-space-v2.onrender.com
     ```
     - Update your frontend code to use `import.meta.env.VITE_API_URL` instead of `http://localhost:5500`
+    - **Note**: The frontend code has been updated to automatically use this environment variable
 
 4.  **Deploy**: Click **"Create Static Site"**
 
 ### Post-Deployment Configuration
 
 1.  **Update API URLs in Frontend**:
-    - Replace hardcoded `http://localhost:5500` with your Render backend URL
-    - Use environment variables for flexibility:
-    ```typescript
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5500';
+    - The frontend is already configured to use environment variables via `client/src/config/api.ts`
+    - Simply set the `VITE_API_URL` environment variable in Render:
     ```
+    VITE_API_URL=https://feel-space-v2.onrender.com
+    ```
+    - No code changes needed! The app will automatically use the production URL
 
 2.  **CORS Configuration**:
     - Update your backend to allow requests from your Render frontend URL

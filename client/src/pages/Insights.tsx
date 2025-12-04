@@ -12,14 +12,15 @@ import {
     Gamepad2,
     Download,
     AlertCircle,
-    Loader2,
 } from 'lucide-react';
 import { useWeb3 } from '@/hooks/use-web3';
 import { Button } from '@/components/ui/button';
+import { API_ENDPOINTS } from '@/config/api';
 import { Link } from 'wouter';
 import { InsightCard } from '@/components/analytics/InsightCard';
 import { DistributionChart } from '@/components/analytics/DistributionChart';
 import { EmotionChart } from '@/components/analytics/EmotionChart';
+import { FullPageLoading } from '@/components/ui/loading';
 
 const ICON_MAP: { [key: string]: any } = {
     Sparkles,
@@ -72,7 +73,7 @@ export default function InsightsPage() {
                 setLoading(true);
                 setError(null);
                 const response = await fetch(
-                    `http://localhost:5500/api/emotions/analytics/${address}?days=${days}`
+                    API_ENDPOINTS.emotions.analytics(address, days)
                 );
 
                 if (!response.ok) {
@@ -124,12 +125,7 @@ export default function InsightsPage() {
     }
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-6">
-                <Loader2 className="w-16 h-16 text-primary animate-spin" />
-                <p className="text-xl font-bold text-slate-600">Loading your insights...</p>
-            </div>
-        );
+        return <FullPageLoading message="Loading Your Insights" subMessage="Analyzing your emotional patterns..." />;
     }
 
     if (error) {

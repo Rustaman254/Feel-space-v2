@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { web3Service } from '@/lib/web3';
 import { isMiniPayInApp, isFarcasterInApp, CHAIN_IDS } from '@/config/wagmi';
+import { API_ENDPOINTS } from '@/config/api';
 import type { EventLog } from 'ethers';
 
 export interface EmotionEntry {
@@ -414,7 +415,7 @@ function useWeb3State() {
         try {
           if (address) {
             const response = await fetch(
-              'http://localhost:5500/api/games/complete',
+              API_ENDPOINTS.games.complete,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -508,7 +509,7 @@ function useWeb3State() {
         try {
           if (address) {
             const response = await fetch(
-              'http://localhost:5500/api/emotions/log',
+              API_ENDPOINTS.emotions.log,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

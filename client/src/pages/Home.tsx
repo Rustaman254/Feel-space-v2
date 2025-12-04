@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/use-web3';
 import { EmotionDialog } from '@/components/EmotionDialog';
 import { Link } from 'wouter';
+import { API_ENDPOINTS } from '@/config/api';
 const EMOTIONS = [
   {
     id: 'happy',
@@ -109,7 +110,7 @@ export default function Home() {
 
       try {
         const response = await fetch(
-          `http://localhost:5500/api/emotions/insights/${address}?days=7`
+          API_ENDPOINTS.emotions.insights(address, 7)
         );
         if (response.ok) {
           const result = await response.json();
