@@ -6,6 +6,8 @@ import { BubblePop } from '@/components/games/BubblePop';
 import { MemoryMatch } from '@/components/games/MemoryMatch';
 import { Breathing } from '@/components/games/Breathing';
 import { TicTacToe } from '@/components/games/TicTacToe';
+import MoodJournal from '@/components/games/MoodJournal';
+import ZenGardens from '@/components/games/ZenGardens';
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 
@@ -19,6 +21,8 @@ export default function Game() {
       case 'memory': return 'Mind Match';
       case 'breathing': return 'Box Breathing';
       case 'tictactoe': return 'Tic Tac Toe';
+      case 'journal': return 'Mood Journal';
+      case 'zen': return 'Zen Garden';
       default: return 'Game';
     }
   };
@@ -39,6 +43,8 @@ export default function Game() {
       case 'memory': return <MemoryMatch />;
       case 'breathing': return <Breathing />;
       case 'tictactoe': return <TicTacToe />;
+      // case 'journal': return <MoodJournal />;
+      case 'zen': return <ZenGardens />;
       default: return <div>Game not found</div>;
     }
   };
@@ -51,6 +57,8 @@ export default function Game() {
       case 'memory': return 'Focus Enhancement Session';
       case 'breathing': return 'Calm Regulation Session';
       case 'tictactoe': return 'Strategy Session';
+      case 'journal': return 'Mood Journal Session';
+      case 'zen': return 'Zen Garden Session';
       default: return '';
     }
   };

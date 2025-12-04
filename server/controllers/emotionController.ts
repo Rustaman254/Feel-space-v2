@@ -3,6 +3,7 @@ import { EmotionLog } from '../models/EmotionLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
+import { analyticsService } from '../services/analytics.js';
 
 export const logEmotion = asyncHandler(async (req: Request, res: Response) => {
     const emotionLog = await EmotionLog.create(req.body);
@@ -29,5 +30,54 @@ export const getEmotionHistory = asyncHandler(async (req: Request, res: Response
         success: true,
         count: history.length,
         data: history,
+    });
+});
+
+export const getEmotionAnalytics = asyncHandler(async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    const days = parseInt(req.query.days as string) || 30;
+
+    const analytics = await analyticsService.getAnalytics(walletAddress, days);
+
+    logger.info('Analytics retrieved successfully', {
+        walletAddress,
+        totalLogs: analytics.totalLogs,
+    });
+
+    res.status(200).json({
+        success: true,
+        data: analytics,
+    });
+});
+
+export const getEmotionInsights = asyncHandler(async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    const days = parseInt(req.query.days as string) || 30;
+
+    const analytics = await analyticsService.getAnalytics(walletAddress, days);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            insights: analytics.insights,
+            statistics: analytics.statistics,
+        },
+    });
+});
+
+export const getEmotionTrends = asyncHandler(async (req: Request, res: Response) => {
+    const { walletAddress } = req.params;
+    const days = parseInt(req.query.days as string) || 30;
+
+    const analytics = await analyticsService.getAnalytics(walletAddress, days);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            trends: analytics.trends,
+            emotionDistribution: analytics.emotionDistribution,
+            timePatterns: analytics.timePatterns,
+            dayPatterns: analytics.dayPatterns,
+        },
     });
 });

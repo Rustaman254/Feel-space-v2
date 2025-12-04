@@ -5,6 +5,11 @@
 ## 🌟 Features
 
 - **Emotion Journaling**: Log your daily emotions (Happy, Excited, Grateful, Calm, Tired, Anxious, Sad, Angry) with intensity ratings and notes.
+- **Emotional Insights & Analytics**: Track patterns, identify triggers, and receive personalized recommendations based on your emotional data.
+  - Pattern detection for time-of-day and day-of-week correlations
+  - Trend visualization with interactive charts
+  - Personalized insights and actionable recommendations
+  - Data export functionality (JSON)
 - **On-Chain History**: Your emotion logs and game sessions are stored on the Celo blockchain, ensuring data permanence and user ownership.
 - **Arcade Games**: Play mini-games designed to regulate emotions:
   - **Bubble Pop**: Stress relief through satisfying physics.

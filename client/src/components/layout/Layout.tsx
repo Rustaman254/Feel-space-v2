@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Wallet, Sparkles, LogOut, History, Gamepad2, Home, Zap, Users } from 'lucide-react';
+import { Wallet, Sparkles, LogOut, History, Gamepad2, Home, Zap, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { useWeb3 } from '@/hooks/use-web3';
@@ -97,6 +97,17 @@ export function Layout({ children }: LayoutProps) {
                     }`}
                 >
                   <History className="w-4 h-4 mr-2" /> History
+                </Button>
+              </Link>
+              <Link href="/insights">
+                <Button
+                  variant="ghost"
+                  className={`font-bold border-2 ${location === '/insights'
+                    ? 'bg-accent/30 border-black text-black'
+                    : 'border-transparent hover:bg-slate-50 text-slate-600'
+                    }`}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" /> Insights
                 </Button>
               </Link>
               <Link href="/community">
@@ -234,6 +245,15 @@ export function Layout({ children }: LayoutProps) {
             >
               <History className="w-5 h-5" />
               <span className="text-[9px] font-black uppercase">History</span>
+            </div>
+          </Link>
+          <Link href="/insights">
+            <div
+              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors whitespace-nowrap ${location === '/insights' ? 'bg-accent/30 text-black' : 'text-slate-400'
+                }`}
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="text-[9px] font-black uppercase">Insights</span>
             </div>
           </Link>
           <Link href="/community">

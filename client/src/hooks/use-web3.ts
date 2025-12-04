@@ -5,22 +5,19 @@ import React, {
   createContext,
   useContext,
 } from 'react';
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useBalance,
+  useChainId,
+  useSwitchChain,
+  useConnectors,
+} from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { web3Service } from '@/lib/web3';
-
-declare global {
-  interface Window {
-    ethereum?: any;
-    // Common wallet injections
-    coinbaseWalletExtension?: any;
-    trustwallet?: any;
-    phantom?: any;
-    brave?: any;
-    okxwallet?: any;
-    bitkeep?: any;
-    rabby?: any;
-  }
-}
+import { isMiniPayInApp, isFarcasterInApp, CHAIN_IDS } from '@/config/wagmi';
+import type { EventLog } from 'ethers';
 
 export interface EmotionEntry {
   _id?: string;
@@ -51,32 +48,40 @@ export interface WalletOption {
 
 // Internal hook that contains the actual implementation
 function useWeb3State() {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  // Wagmi hooks
+  const { address, isConnected: wagmiIsConnected } = useAccount();
+  const { connect: wagmiConnect, connectors } = useConnect();
+  const { disconnect: wagmiDisconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const { data: balanceData } = useBalance({
+    address: address,
+  });
+
+  // Local state
   const [balance, setBalance] = useState<string>('0');
   const [balances, setBalances] = useState<{ [key: string]: number }>({});
   const [ownedGames, setOwnedGames] = useState<string[]>([]);
   const [history, setHistory] = useState<EmotionEntry[]>([]);
   const [gameSessions, setGameSessions] = useState<GameSessionEntry[]>([]);
-  const [chainId, setChainId] = useState<string | null>(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [installedWallets, setInstalledWallets] = useState<WalletOption[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
 
-  // CELO SEPOLIA CHAIN ID (double-check this is correct for your deployment)
-  const CELO_SEPOLIA_CHAIN_ID = '0xaa044c';
+  // Update balance when balanceData changes
+  useEffect(() => {
+    if (balanceData) {
+      setBalance(balanceData.formatted);
+    }
+  }, [balanceData]);
 
-  // Detect if running inside MiniPay in-app browser
-  const isMiniPayInApp = useCallback(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    return (
-      userAgent.includes('minipay') ||
-      (typeof window.ethereum !== 'undefined' &&
-        window.ethereum.isMiniPay === true)
-    );
-  }, []);
+  // Update connection state
+  useEffect(() => {
+    setIsConnected(wagmiIsConnected);
+  }, [wagmiIsConnected]);
 
-  // Check for all installed EVM wallets
+  // Detect installed wallets from Wagmi connectors
   useEffect(() => {
     const detectWallets = () => {
       const wallets: WalletOption[] = [];
@@ -94,135 +99,89 @@ function useWeb3State() {
         return;
       }
 
-      // Standard EVM wallet detection for regular browsers
-      const walletChecks = [
-        {
-          name: 'MetaMask',
-          check: () =>
-            window.ethereum?.isMetaMask && !window.ethereum?.isBraveWallet,
-          provider: () => window.ethereum,
-          downloadUrl: 'https://metamask.io/download/',
-        },
-        {
-          name: 'Coinbase Wallet',
-          check: () =>
-            window.ethereum?.isCoinbaseWallet ||
-            window.coinbaseWalletExtension,
-          provider: () => window.coinbaseWalletExtension || window.ethereum,
-          downloadUrl: 'https://www.coinbase.com/wallet/downloads',
-        },
-        {
-          name: 'Trust Wallet',
-          check: () => window.ethereum?.isTrust || window.trustwallet,
-          provider: () => window.trustwallet || window.ethereum,
-          downloadUrl: 'https://trustwallet.com/download',
-        },
-        {
-          name: 'Brave Wallet',
-          check: () => window.ethereum?.isBraveWallet || window.brave,
-          provider: () => window.brave || window.ethereum,
-          downloadUrl: 'https://brave.com/wallet/',
-        },
-        {
-          name: 'Rabby Wallet',
-          check: () => window.ethereum?.isRabby || window.rabby,
-          provider: () => window.rabby || window.ethereum,
-          downloadUrl: 'https://rabby.io/',
-        },
-        {
-          name: 'OKX Wallet',
-          check: () => window.okxwallet,
-          provider: () => window.okxwallet,
-          downloadUrl: 'https://www.okx.com/web3',
-        },
-        {
-          name: 'Phantom',
-          check: () => window.phantom?.ethereum,
-          provider: () => window.phantom?.ethereum,
-          downloadUrl: 'https://phantom.app/download',
-        },
-        {
-          name: 'BitKeep',
-          check: () =>
-            window.bitkeep?.ethereum || window.ethereum?.isBitKeep,
-          provider: () => window.bitkeep?.ethereum || window.ethereum,
-          downloadUrl: 'https://bitkeep.com/download',
-        },
-      ];
-
-      walletChecks.forEach(({ name, check, provider, downloadUrl }) => {
-        const installed = check();
+      // Check if running in Farcaster
+      if (isFarcasterInApp()) {
         wallets.push({
-          name,
-          installed: !!installed,
-          downloadUrl,
-          provider: installed ? provider() : undefined,
-          isInApp: false,
-        });
-      });
-
-      if (window.ethereum && !wallets.some((w) => w.installed)) {
-        wallets.unshift({
-          name: 'Injected Wallet',
+          name: 'Farcaster Wallet',
           installed: true,
           downloadUrl: '',
           provider: window.ethereum,
+          isInApp: true,
+        });
+        setInstalledWallets(wallets);
+        return;
+      }
+
+      // Map Wagmi connectors to wallet options
+      connectors.forEach((connector) => {
+        const isReady = typeof connector.ready === 'boolean' ? connector.ready : true;
+
+        wallets.push({
+          name: connector.name,
+          installed: isReady,
+          downloadUrl: getDownloadUrl(connector.name),
+          provider: connector,
           isInApp: false,
         });
-      }
+      });
 
       setInstalledWallets(wallets);
     };
 
     detectWallets();
-    const timer = setTimeout(detectWallets, 1000);
-    return () => clearTimeout(timer);
-  }, [isMiniPayInApp]);
+  }, [connectors]);
+
+  // Helper to get download URL for wallet
+  const getDownloadUrl = (walletName: string): string => {
+    const urls: { [key: string]: string } = {
+      'MetaMask': 'https://metamask.io/download/',
+      'Coinbase Wallet': 'https://www.coinbase.com/wallet/downloads',
+      'WalletConnect': 'https://walletconnect.com/',
+      'Trust Wallet': 'https://trustwallet.com/download',
+      'Brave Wallet': 'https://brave.com/wallet/',
+      'Rabby Wallet': 'https://rabby.io/',
+      'OKX Wallet': 'https://www.okx.com/web3',
+      'Phantom': 'https://phantom.app/download',
+      'BitKeep': 'https://bitkeep.com/download',
+    };
+    return urls[walletName] || '';
+  };
 
   // Load persisted connection state
   useEffect(() => {
-    const savedAddress = localStorage.getItem('feelspace_wallet_address');
-    const savedIsConnected = localStorage.getItem('feelspace_is_connected');
     const savedHistory = localStorage.getItem('feelspace_history');
     const savedBalances = localStorage.getItem('feelspace_balances');
     const savedGames = localStorage.getItem('feelspace_games');
 
-    if (savedAddress && savedIsConnected === 'true') {
-      setAddress(savedAddress);
-      setIsConnected(true);
-      if (savedHistory) {
-        try {
-          setHistory(JSON.parse(savedHistory));
-        } catch (e) {
-          console.error('Failed to parse history:', e);
-        }
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to parse history:', e);
       }
-      if (savedBalances) {
-        try {
-          setBalances(JSON.parse(savedBalances));
-        } catch (e) {
-          console.error('Failed to parse balances:', e);
-        }
+    }
+    if (savedBalances) {
+      try {
+        setBalances(JSON.parse(savedBalances));
+      } catch (e) {
+        console.error('Failed to parse balances:', e);
       }
-      if (savedGames) {
-        try {
-          setOwnedGames(JSON.parse(savedGames));
-        } catch (e) {
-          console.error('Failed to parse games:', e);
-        }
+    }
+    if (savedGames) {
+      try {
+        setOwnedGames(JSON.parse(savedGames));
+      } catch (e) {
+        console.error('Failed to parse games:', e);
       }
     }
   }, []);
 
   const saveToLocalStorage = useCallback(
     (
-      connectedAddress: string,
       connectedHistory: EmotionEntry[],
       connectedBalances: { [key: string]: number },
       connectedGames: string[]
     ) => {
-      localStorage.setItem('feelspace_wallet_address', connectedAddress);
-      localStorage.setItem('feelspace_is_connected', 'true');
       localStorage.setItem(
         'feelspace_history',
         JSON.stringify(connectedHistory)
@@ -237,198 +196,48 @@ function useWeb3State() {
   );
 
   const clearLocalStorage = useCallback(() => {
-    localStorage.removeItem('feelspace_wallet_address');
-    localStorage.removeItem('feelspace_is_connected');
     localStorage.removeItem('feelspace_history');
     localStorage.removeItem('feelspace_balances');
     localStorage.removeItem('feelspace_games');
   }, []);
 
+  // Load blockchain data when connected
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      clearLocalStorage();
-    };
+    const loadBlockchainData = async () => {
+      if (!address || !isConnected) return;
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [clearLocalStorage]);
-
-  const connect = useCallback(
-    async (walletName?: string) => {
       try {
-        console.log('Starting wallet connection with wallet:', walletName);
-
-        // 1. Determine provider
-        let provider: any;
-
-        if (walletName) {
-          const selectedWallet = installedWallets.find(
-            (w) => w.name === walletName
-          );
-          if (selectedWallet?.provider) {
-            provider = selectedWallet.provider;
-            console.log(`Using ${walletName} provider`);
-          }
-        }
-
-        if (!provider) {
-          provider = window.ethereum;
-        }
-
-        if (!provider) {
-          console.warn('No ethereum provider found');
-          toast({
-            title: 'No Wallet Found',
-            description: 'Please install a Web3 wallet to continue.',
-            variant: 'destructive',
-          });
-          setShowWalletModal(true);
-          return;
-        }
-
-        console.log('Provider found:', provider);
-
-        // 2. Request accounts
-        console.log('Requesting accounts...');
-        const accounts = await provider.request({
-          method: 'eth_requestAccounts',
-        });
-
-        if (!accounts || accounts.length === 0) {
-          throw new Error('No accounts returned from provider');
-        }
-
-        const account = accounts[0];
-        console.log('Account received:', account);
-
-        setAddress(account);
-        setIsConnected(true);
-
-        // 3. Read current chain
-        let currentChainId = await provider.request({
-          method: 'eth_chainId',
-        });
-        console.log('Current chainId:', currentChainId);
-        setChainId(currentChainId);
-
-        // 4. Ensure we are on Celo Sepolia BEFORE touching the contract
-        if (currentChainId !== CELO_SEPOLIA_CHAIN_ID) {
-          try {
-            console.log('Attempting to switch to Celo Sepolia...');
-            await provider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
-            });
-            console.log('Successfully switched to Celo Sepolia');
-          } catch (switchError: any) {
-            console.warn(
-              'Chain switch error:',
-              switchError.code,
-              switchError.message
-            );
-
-            const msg = String(switchError.message || '').toLowerCase();
-            const needsAdd =
-              switchError.code === 4902 ||
-              msg.includes('unrecognized chain id') ||
-              msg.includes('chain 0x');
-
-            if (needsAdd) {
-              try {
-                console.log('Adding Celo Sepolia chain...');
-                await provider.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [
-                    {
-                      chainId: CELO_SEPOLIA_CHAIN_ID,
-                      chainName: 'Celo Sepolia Testnet',
-                      nativeCurrency: {
-                        name: 'CELO',
-                        symbol: 'CELO',
-                        decimals: 18,
-                      },
-                      rpcUrls: ['https://forno.celo-sepolia.celo-testnet.org'],
-                      blockExplorerUrls: [
-                        'https://celo-sepolia.blockscout.com',
-                      ],
-                    },
-                  ],
-                });
-                console.log('Successfully added Celo Sepolia chain');
-
-                // Explicitly switch after adding
-                await provider.request({
-                  method: 'wallet_switchEthereumChain',
-                  params: [{ chainId: CELO_SEPOLIA_CHAIN_ID }],
-                });
-              } catch (addError: any) {
-                console.error(
-                  'Failed to add/switch to Celo Sepolia',
-                  addError
-                );
-                if (addError.code === 4001) {
-                  clearLocalStorage();
-                }
-                throw addError;
-              }
-            } else if (switchError.code === 4001) {
-              console.log('User rejected chain switch');
-              clearLocalStorage();
-              throw switchError;
-            } else {
-              throw switchError;
-            }
-          }
-
-          // Refresh chainId after switching/adding
-          currentChainId = await provider.request({
-            method: 'eth_chainId',
-          });
-          console.log('New chainId:', currentChainId);
-          setChainId(currentChainId);
-        }
-
-        // 5. Get native balance
-        const balanceHex = await provider.request({
-          method: 'eth_getBalance',
-          params: [account, 'latest'],
-        });
-        const balanceEth = (parseInt(balanceHex, 16) / 1e18).toFixed(4);
-        setBalance(balanceEth);
-
-        // 6. Initialize contract on the correct chain
         await web3Service.initialize();
 
-        // 7. Load FEELS balance
-        const feelsBalanceStr = await web3Service.getUserFeelsBalance(account);
+        // Load FEELS balance
+        const feelsBalanceStr = await web3Service.getUserFeelsBalance(address);
         const feelsBalance = Number(feelsBalanceStr);
 
-        // 8. Fetch on-chain emotion history
-        const chainHistory = await web3Service.getUserHistory(account);
+        // Fetch on-chain emotion history
+        const chainHistory = await web3Service.getUserHistory(address);
 
-        // 9. Fetch EmotionLogged events to hydrate tx hashes
-        const emotionEvents = await web3Service.getUserEmotionEvents(account);
+        // Fetch EmotionLogged events to hydrate tx hashes
+        const emotionEvents = await web3Service.getUserEmotionEvents(address);
         const txHashMap = new Map<string, string>();
 
         for (const ev of emotionEvents) {
-          const user = ev.args?.user as string | undefined;
-          const emotionType = ev.args?.emotionType as string | undefined;
-          const ts = ev.args?.timestamp as bigint | number | undefined;
+          // Type guard to check if event is EventLog
+          if (!('args' in ev)) continue;
+
+          const eventLog = ev as EventLog;
+          const user = eventLog.args?.user as string | undefined;
+          const emotionType = eventLog.args?.emotionType as string | undefined;
+          const ts = eventLog.args?.timestamp as bigint | number | undefined;
 
           if (!user || !emotionType || ts === undefined) continue;
 
           const tsSec = typeof ts === 'bigint' ? Number(ts) : Number(ts);
           const key = `${user.toLowerCase()}-${tsSec}-${emotionType}`;
-          txHashMap.set(key, ev.transactionHash);
+          txHashMap.set(key, eventLog.transactionHash);
         }
 
-        // 10. Fetch game sessions
-        const chainGameSessions = await web3Service.getUserGameSessions(
-          account
-        );
+        // Fetch game sessions
+        const chainGameSessions = await web3Service.getUserGameSessions(address);
         const formattedGameSessions: GameSessionEntry[] = (
           chainGameSessions || []
         ).map((session: any) => {
@@ -446,7 +255,7 @@ function useWeb3State() {
           };
         });
 
-        // 11. Format history for UI
+        // Format history for UI
         const formattedHistory: EmotionEntry[] = (chainHistory || []).map(
           (entry: any) => {
             const tsSecRaw = entry.timestamp as bigint | number;
@@ -456,7 +265,7 @@ function useWeb3State() {
                 : Number(tsSecRaw);
 
             const emotionType = entry.emotionType as string;
-            const key = `${account.toLowerCase()}-${tsSec}-${emotionType}`;
+            const key = `${address.toLowerCase()}-${tsSec}-${emotionType}`;
             const txHash = txHashMap.get(key);
 
             return {
@@ -478,7 +287,42 @@ function useWeb3State() {
         setHistory(formattedHistory);
         setGameSessions(formattedGameSessions);
 
-        saveToLocalStorage(account, formattedHistory, newBalances, newGames);
+        saveToLocalStorage(formattedHistory, newBalances, newGames);
+      } catch (error) {
+        console.error('Error loading blockchain data:', error);
+      }
+    };
+
+    loadBlockchainData();
+  }, [address, isConnected, saveToLocalStorage]);
+
+  const connect = useCallback(
+    async (walletName?: string) => {
+      try {
+        console.log('Starting wallet connection with wallet:', walletName);
+
+        // Find the connector
+        let selectedConnector = connectors[0]; // Default to first connector
+
+        if (walletName) {
+          const found = connectors.find((c) => c.name === walletName);
+          if (found) {
+            selectedConnector = found;
+          }
+        }
+
+        if (!selectedConnector) {
+          toast({
+            title: 'No Wallet Found',
+            description: 'Please install a Web3 wallet to continue.',
+            variant: 'destructive',
+          });
+          setShowWalletModal(true);
+          return;
+        }
+
+        // Connect using Wagmi
+        wagmiConnect({ connector: selectedConnector });
 
         setShowWalletModal(false);
         toast({
@@ -487,23 +331,11 @@ function useWeb3State() {
         });
       } catch (error: any) {
         console.error('Error connecting wallet:', error);
-        console.error('Error code:', error?.code);
-        console.error('Error message:', error?.message);
 
         if (error.code === 4001) {
           toast({
             title: 'Connection Cancelled',
             description: 'You cancelled the wallet connection.',
-          });
-        } else if (
-          error.code === -32603 ||
-          error.message?.includes('Internal JSON-RPC error')
-        ) {
-          toast({
-            title: 'Connection Failed',
-            description:
-              'Wallet error. Try using a different wallet or check your connection.',
-            variant: 'destructive',
           });
         } else {
           toast({
@@ -515,33 +347,25 @@ function useWeb3State() {
         }
       }
     },
-    [toast, saveToLocalStorage, clearLocalStorage, installedWallets, CELO_SEPOLIA_CHAIN_ID]
+    [connectors, wagmiConnect, toast]
   );
 
   const disconnect = useCallback(() => {
-    setAddress(null);
-    setIsConnected(false);
+    wagmiDisconnect();
     setBalance('0');
     setBalances({});
     setOwnedGames([]);
     setHistory([]);
     setGameSessions([]);
-    setChainId(null);
     setShowWalletModal(false);
 
     clearLocalStorage();
-
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('feelspace_') || key.startsWith('wallet')) {
-        localStorage.removeItem(key);
-      }
-    });
 
     toast({
       title: 'Wallet Disconnected',
       description: 'Your wallet has been disconnected and all data cleared.',
     });
-  }, [clearLocalStorage, toast]);
+  }, [wagmiDisconnect, clearLocalStorage, toast]);
 
   const buyGame = useCallback(
     async (gameId: string) => {
@@ -631,11 +455,7 @@ function useWeb3State() {
           const feelsBalance = Number(feelsBalanceStr);
           const updatedBalances = { ...balances, FEELS: feelsBalance };
           setBalances(updatedBalances);
-          saveToLocalStorage(address, history, updatedBalances, ownedGames);
-          localStorage.setItem(
-            'feelspace_games',
-            JSON.stringify(ownedGames)
-          );
+          saveToLocalStorage(history, updatedBalances, ownedGames);
         }
 
         toast({
@@ -733,7 +553,7 @@ function useWeb3State() {
         setBalances(newBalances);
 
         if (address) {
-          saveToLocalStorage(address, newHistory, newBalances, ownedGames);
+          saveToLocalStorage(newHistory, newBalances, ownedGames);
         }
 
         toast({
@@ -753,32 +573,14 @@ function useWeb3State() {
     [history, balances, address, ownedGames, saveToLocalStorage, toast]
   );
 
-  useEffect(() => {
-    if (typeof window.ethereum !== 'undefined') {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        if (accounts.length > 0) {
-          setAddress(accounts[0]);
-          setIsConnected(true);
-        } else {
-          disconnect();
-        }
-      });
-
-      window.ethereum.on('chainChanged', (newChainId: string) => {
-        setChainId(newChainId);
-        window.location.reload();
-      });
-    }
-  }, [disconnect]);
-
   return {
-    address,
+    address: address || null,
     isConnected,
     balance,
     balances,
     ownedGames,
     history,
-    chainId,
+    chainId: chainId || null,
     connect,
     disconnect,
     buyGame,
@@ -788,6 +590,7 @@ function useWeb3State() {
     showWalletModal,
     setShowWalletModal,
     installedWallets,
+    switchChain,
   };
 }
 
@@ -805,7 +608,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
 export function useWeb3() {
   const ctx = useContext(Web3Context);
   if (!ctx) {
-    return useWeb3State();
+    throw new Error('useWeb3 must be used within Web3Provider');
   }
   return ctx;
 }

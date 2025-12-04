@@ -13,6 +13,13 @@ export async function registerRoutes(
 
   app.get("/api/emotions/history/:walletAddress", validateWalletAddress, emotionController.getEmotionHistory);
 
+  // Analytics routes
+  app.get("/api/emotions/analytics/:walletAddress", validateWalletAddress, emotionController.getEmotionAnalytics);
+
+  app.get("/api/emotions/insights/:walletAddress", validateWalletAddress, emotionController.getEmotionInsights);
+
+  app.get("/api/emotions/trends/:walletAddress", validateWalletAddress, emotionController.getEmotionTrends);
+
   // Game routes
   app.post("/api/games/complete", validateGameSession, gameController.completeGame);
 

@@ -3,8 +3,11 @@
  * MiniPay is Opera's mobile wallet for Celo
  */
 
-export interface MiniPayProvider extends Window['ethereum'] {
+export interface MiniPayProvider {
     isMiniPay?: boolean;
+    request: (args: { method: string; params?: any[] }) => Promise<any>;
+    on?: (event: string, handler: (...args: any[]) => void) => void;
+    removeListener?: (event: string, handler: (...args: any[]) => void) => void;
 }
 
 /**

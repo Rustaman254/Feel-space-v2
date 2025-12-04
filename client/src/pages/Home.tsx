@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { Smile, Frown, CloudRain, Zap, ArrowRight, Flame, Sun, BatteryCharging, Heart, Wallet, Sparkles } from 'lucide-react';
+import { Smile, Frown, CloudRain, Zap, ArrowRight, Flame, Sun, BatteryCharging, Heart, Wallet, Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/use-web3';
 import { EmotionDialog } from '@/components/EmotionDialog';
+import { Link } from 'wouter';
 const EMOTIONS = [
   {
     id: 'happy',
@@ -95,8 +96,32 @@ export default function Home() {
     logEmotion,
     history,
     setShowWalletModal,
-    installedWallets
+    installedWallets,
+    address
   } = useWeb3();
+
+  const [insights, setInsights] = useState<any>(null);
+
+  // Fetch quick insights
+  useEffect(() => {
+    const fetchInsights = async () => {
+      if (!address || !isConnected || history.length === 0) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:5500/api/emotions/insights/${address}?days=7`
+        );
+        if (response.ok) {
+          const result = await response.json();
+          setInsights(result.data);
+        }
+      } catch (err) {
+        console.error('Error fetching insights:', err);
+      }
+    };
+
+    fetchInsights();
+  }, [address, isConnected, history.length]);
 
   const handleConnectWallet = () => {
     setShowWalletModal(true);
@@ -239,6 +264,38 @@ export default function Home() {
           </span>
         </div>
       </div>
+
+      {/* Quick Insights Widget */}
+      {history.length > 0 && insights && insights.insights.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-black p-5 rounded-xl shadow-flat"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-5 h-5 text-purple-600" />
+                <h3 className="font-black text-lg uppercase">Quick Insight</h3>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-1">
+                {insights.insights[0].title}
+              </p>
+              <p className="text-xs font-medium text-slate-600">
+                {insights.insights[0].description}
+              </p>
+            </div>
+            <Link href="/insights">
+              <Button
+                size="sm"
+                className="btn-flat bg-purple-600 text-white border-2 border-black font-bold whitespace-nowrap"
+              >
+                View All
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
+      )}
 
       {/* Hero Section */}
       <section className="text-center space-y-6 mt-4">
