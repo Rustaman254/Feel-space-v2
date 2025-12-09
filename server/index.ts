@@ -25,8 +25,10 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: env.NODE_ENV === 'production' ? false : '*',
+  origin: env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',') : '*',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Logging middleware
